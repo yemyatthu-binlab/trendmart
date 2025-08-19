@@ -6,14 +6,15 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddProductForm } from "@/components/organisms/products/AddProductForm/AddProductForm";
+import { useGetProductFormDataQuery } from "@/graphql/generated";
 
 // Define types for form data
 type Size = { id: string; value: string };
-type Color = { id: string; name: string; hexCode: string | null };
+type Color = { id: string; name: string; hexCode?: string | null };
 type Category = { id: string; name: string };
 
 export default function AddProductPage() {
-  const { data, loading, error } = useQuery(GET_PRODUCT_FORM_DATA);
+  const { data, loading, error } = useGetProductFormDataQuery();
 
   if (loading) return <p>Loading form data...</p>;
   if (error) return <p>Error loading data: {error.message}</p>;
@@ -21,6 +22,7 @@ export default function AddProductPage() {
   const sizes: Size[] = data?.getSizes || [];
   const colors: Color[] = data?.getColors || [];
   const categories: Category[] = data?.getCategories || [];
+  const subCategories: Category[] = data?.getMainSubCategories || [];
 
   return (
     <div className="container mx-auto py-8">
@@ -32,7 +34,12 @@ export default function AddProductPage() {
         </Button>
         <h1 className="text-3xl font-bold ml-4">Add New Product</h1>
       </div>
-      <AddProductForm categories={categories} sizes={sizes} colors={colors} />
+      <AddProductForm
+        categories={categories}
+        sizes={sizes}
+        colors={colors}
+        subCategories={subCategories}
+      />
     </div>
   );
 }

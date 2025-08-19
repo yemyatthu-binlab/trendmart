@@ -32,7 +32,28 @@ export const productFormSchema = z.object({
     .min(1, "Please select at least one category."),
   variants: z
     .array(variantSchema)
-    .min(1, "Product must have at least one variant."),
+    .min(1, "Product must have at least one variant.")
+    // ✨ New validation logic for unique size/color combinations
+    .refine(
+      (variants) => {
+        const combinations = new Set();
+        for (const variant of variants) {
+          // A variant is only a duplicate if both size and color are selected
+          if (variant.sizeId > 0 && variant.colorId > 0) {
+            const key = `${variant.sizeId}-${variant.colorId}`;
+            if (combinations.has(key)) {
+              return false; // Found a duplicate
+            }
+            combinations.add(key);
+          }
+        }
+        return true; // No duplicates
+      },
+      {
+        message:
+          "Each variant must have a unique combination of size and color.",
+      }
+    ),
 });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;

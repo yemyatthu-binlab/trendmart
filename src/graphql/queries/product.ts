@@ -1,17 +1,21 @@
 import { gql } from "@apollo/client";
 
 export const GET_PRODUCTS_LIST = gql`
-  query GetProductsList {
-    getProducts {
-      id
-      name
-      createdAt
-      categories {
-        name
-      }
-      variants {
+  query GetProductsList($skip: Int, $take: Int) {
+    getProducts(skip: $skip, take: $take) {
+      products {
         id
+        name
+        createdAt
+        categories {
+          id
+          name
+        }
+        variants {
+          id
+        }
       }
+      totalCount
     }
   }
 `;
@@ -30,6 +34,20 @@ export const GET_PRODUCT_FORM_DATA = gql`
     getCategories {
       id
       name
+    }
+    getMainSubCategories {
+      id
+      name
+    }
+  }
+`;
+
+export const GET_COLORS = gql`
+  query GetColors {
+    getColors {
+      id
+      name
+      hexCode
     }
   }
 `;

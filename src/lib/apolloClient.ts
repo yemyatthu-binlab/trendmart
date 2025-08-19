@@ -5,10 +5,16 @@ import {
   from,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
+import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
 const httpLink = createHttpLink({
   // Your backend's GraphQL endpoint
   uri: "http://localhost:4000/graphql",
+});
+
+const uploadLink = createUploadLink({
+  uri:
+    process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql",
 });
 
 // This middleware will add the token to the headers of each request
@@ -26,6 +32,6 @@ const authLink = setContext((_, { headers }) => {
 
 export const apolloClient = new ApolloClient({
   // Use `from` to chain the authLink and httpLink
-  link: from([authLink, httpLink]),
+  link: authLink.concat(uploadLink),
   cache: new InMemoryCache(),
 });
