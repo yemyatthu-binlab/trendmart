@@ -29,12 +29,11 @@ export function ImageUploader({
     try {
       const { data } = await uploadImage({
         variables: {
-          file: file, // The Apollo Client link will handle the multipart request
+          file: file,
         },
       });
 
       if (data?.uploadImage?.url) {
-        // 4. Update the form with the URL returned from the backend
         onUploadSuccess(data.uploadImage.url);
         toast.success("Image uploaded successfully!");
       } else {
@@ -48,7 +47,7 @@ export function ImageUploader({
   };
 
   const removeImage = () => {
-    onUploadSuccess(""); // Clear the URL in the form
+    onUploadSuccess("");
   };
 
   if (currentImageUrl) {

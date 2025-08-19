@@ -11,7 +11,6 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 
-// ShadCN UI Components
 import {
   Table,
   TableBody,
@@ -37,7 +36,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 
-// Local Components & GraphQL
 import { Sidebar } from "@/components/organisms/common/Sidebar/Sidebar";
 import {
   useGetProductsListQuery,
@@ -100,17 +98,14 @@ export default function ProductsPage() {
     handleConfirmDelete(productId);
   };
 
-  // Handler to execute the deletion
   const handleConfirmDelete = async (productId: string) => {
     if (productId) {
       try {
-        // Wait for the mutation to complete before moving on
         await deleteProduct({
           variables: { deleteProductId: productId },
         });
       } catch (err) {
         console.error("Failed to delete product:", err);
-        // Here you could add a toast notification to inform the user of an error
       }
     }
   };

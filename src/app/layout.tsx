@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { ApolloProvider } from "@/components/atoms/common/ApolloProvider/ApolloProvider";
 
-const poppins = Poppins({
+const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   variable: "--font-poppins",
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={poppins.variable}>
+    <html lang="en" className={montserrat.variable}>
       <body className="font-sans antialiased flex min-h-screen bg-gray-100">
         <ApolloProvider>{children}</ApolloProvider>
       </body>

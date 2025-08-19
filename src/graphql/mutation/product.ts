@@ -9,6 +9,14 @@ export const CREATE_PRODUCT = gql`
   }
 `;
 
+export const UPDATE_PRODUCT = gql`
+  mutation UpdateProduct($id: ID!, $input: UpdateProductInput!) {
+    updateProduct(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+
 export const CREATE_COLOR = gql`
   mutation CreateColor($name: String!, $hexCode: String!) {
     createColor(name: $name, hexCode: $hexCode) {

@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useMutation } from "@apollo/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { CREATE_COLOR } from "@/graphql/mutation/product";
+import { GET_COLORS } from "@/graphql/queries/product";
+import { GetColorsQuery } from "@/graphql/generated";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +17,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -24,9 +26,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PlusCircle } from "lucide-react";
-import { GET_COLORS } from "@/graphql/queries/product";
-import { GetColorsQuery } from "@/graphql/generated";
 
 const colorSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -38,10 +37,18 @@ const colorSchema = z.object({
     ),
 });
 
-export function AddColorModal() {
-  const [open, setOpen] = useState(false);
+interface AddColorModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialHexCode?: string;
+}
+
+export function AddColorModal({
+  open,
+  onOpenChange,
+  initialHexCode = "#",
+}: AddColorModalProps) {
   const [createColor, { loading }] = useMutation(CREATE_COLOR, {
-    // This is the magic part: update the cache on success
     update(cache, { data: { createColor: newColor } }) {
       const existingData = cache.readQuery<GetColorsQuery>({
         query: GET_COLORS,
@@ -59,27 +66,29 @@ export function AddColorModal() {
 
   const form = useForm({
     resolver: zodResolver(colorSchema),
-    defaultValues: { name: "", hexCode: "#" },
+    defaultValues: { name: "", hexCode: initialHexCode },
   });
+
+  useEffect(() => {
+    if (initialHexCode) {
+      form.setValue("hexCode", initialHexCode);
+      form.setFocus("name"); 
+    }
+  }, [initialHexCode, form]);
 
   const onSubmit = async (values: z.infer<typeof colorSchema>) => {
     try {
       await createColor({ variables: values });
       toast.success("Color added successfully!");
-      form.reset();
-      setOpen(false);
+      form.reset({ name: "", hexCode: "#" });
+      onOpenChange(false);
     } catch (error: any) {
       toast.error(`Failed to add color: ${error.message}`);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <PlusCircle className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New Color</DialogTitle>

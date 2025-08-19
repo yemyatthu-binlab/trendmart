@@ -33,21 +33,19 @@ export const productFormSchema = z.object({
   variants: z
     .array(variantSchema)
     .min(1, "Product must have at least one variant.")
-    // ✨ New validation logic for unique size/color combinations
     .refine(
       (variants) => {
         const combinations = new Set();
         for (const variant of variants) {
-          // A variant is only a duplicate if both size and color are selected
           if (variant.sizeId > 0 && variant.colorId > 0) {
             const key = `${variant.sizeId}-${variant.colorId}`;
             if (combinations.has(key)) {
-              return false; // Found a duplicate
+              return false;
             }
             combinations.add(key);
           }
         }
-        return true; // No duplicates
+        return true;
       },
       {
         message:

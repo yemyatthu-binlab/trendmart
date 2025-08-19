@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useFieldArray, useWatch, type UseFormReturn } from "react-hook-form";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { Trash2, Pipette, PlusCircle } from "lucide-react";
+import { toast } from "sonner";
 
 import { ProductFormValues } from "@/lib/validator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,9 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AddColorModal } from "@/components/molecules/products/AddColorModal/AddColorModal";
 import { ImageUploader } from "@/components/atoms/common/ImageUploader/ImageUploader";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface VariantFormSectionProps {
   form: UseFormReturn<ProductFormValues>;
@@ -41,6 +44,9 @@ export function VariantFormSection({
   colors,
   onRemove,
 }: VariantFormSectionProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initialHex, setInitialHex] = useState<string | undefined>(undefined);
+
   const {
     fields: imageFields,
     append: appendImage,
@@ -78,192 +84,220 @@ export function VariantFormSection({
     });
   };
 
-  return (
-    <Card className="border-dashed">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{variantTitle}</CardTitle> {/* ✨ Use dynamic title */}
-        <Button variant="ghost" size="icon" onClick={onRemove}>
-          <Trash2 className="h-4 w-4 text-red-500" />
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name={`variants.${variantIndex}.sizeId`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Size</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={String(field.value)}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {sizes.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.value.split("_")[1]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`variants.${variantIndex}.colorId`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Color</FormLabel>
-                <div className="flex items-center gap-2">
-                  {/* ✨ Wrap the color picker in a scrollable area */}
-                  <ScrollArea className="flex-grow whitespace-nowrap rounded-md border w-[100px] pb-1">
-                    <div className="flex w-max items-center gap-3 p-2">
-                      {colors.map((color) => (
-                        <button
-                          key={color.id}
-                          type="button"
-                          onClick={() => field.onChange(Number(color.id))}
-                          className={`w-8 h-8 rounded-full border-2 transition-all ${
-                            field.value === Number(color.id)
-                              ? "ring-2 ring-offset-2 ring-black"
-                              : "border-gray-200"
-                          }`}
-                          style={{
-                            backgroundColor: color.hexCode ?? undefined,
-                          }}
-                          title={color.name}
-                        />
-                      ))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                  <AddColorModal />
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Rest of the fields are unchanged... */}
-          <FormField
-            control={form.control}
-            name={`variants.${variantIndex}.price`}
-            render={({ field }) => (
-              <FormItem className="mt-4">
-                <FormLabel>Price</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="99.99"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`variants.${variantIndex}.stock`}
-            render={({ field }) => (
-              <FormItem className="mt-3">
-                <FormLabel>Stock</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="100" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+  const openColorInspector = async () => {
+    if (!("EyeDropper" in window)) {
+      toast.error("Your browser doesn't support the color inspector tool.");
+      return;
+    }
+    try {
+      const eyeDropper = new (window as any).EyeDropper();
+      const { sRGBHex } = await eyeDropper.open();
+      setInitialHex(sRGBHex);
+      setIsModalOpen(true);
+    } catch {
+      console.log("Color selection cancelled.");
+    }
+  };
 
-        {/* Image Section is unchanged... */}
-        <div>
-          <Label className="text-md font-medium">Variant Images</Label>
-          <div className="space-y-4 mt-2">
-            {imageFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="flex items-center gap-2 p-2 border rounded-lg"
-              >
-                <FormField
-                  control={form.control}
-                  name={`variants.${variantIndex}.images.${index}.isPrimary`}
-                  render={({ field: radioField }) => (
-                    <FormItem>
-                      <FormControl>
-                        <input
-                          type="radio"
-                          name={`primaryImage-${variantIndex}`}
-                          checked={radioField.value}
-                          onChange={() => setPrimaryImage(index)}
-                          className="form-radio h-5 w-5 text-black focus:ring-black"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <div className="flex-grow space-y-2">
-                  <FormField
-                    control={form.control}
-                    name={`variants.${variantIndex}.images.${index}.imageUrl`}
-                    render={({ field: imageField }) => (
-                      <FormItem>
-                        <FormControl>
-                          <ImageUploader
-                            currentImageUrl={imageField.value}
-                            onUploadSuccess={(url) => imageField.onChange(url)}
+  const openAddColorModal = () => {
+    setInitialHex(undefined);
+    setIsModalOpen(true);
+  };
+
+  return (
+    <>
+      <AddColorModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        initialHexCode={initialHex}
+      />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between -mt-1">
+          <CardTitle className="text-md">{variantTitle}</CardTitle>
+          {variantIndex > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onRemove}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name={`variants.${variantIndex}.sizeId`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Size</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={field.value.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="min-w-[60px]">
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sizes.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.value.split("_")[1]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`variants.${variantIndex}.colorId`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Color</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <ScrollArea className="flex-grow whitespace-nowrap w-[80px] rounded-md border">
+                      <div className="flex w-max space-x-3 p-2 pb-3">
+                        {colors.map((color) => (
+                          <button
+                            key={color.id}
+                            type="button"
+                            onClick={() => field.onChange(Number(color.id))}
+                            className={`w-6 h-6 rounded-full border transition-all ${
+                              field.value === Number(color.id)
+                                ? "ring-2 ring-offset-2 ring-foreground"
+                                : "border-muted-foreground"
+                            }`}
+                            style={{
+                              backgroundColor: color.hexCode ?? undefined,
+                            }}
+                            title={color.name}
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {/* <FormField
-                    control={form.control}
-                    name={`variants.${variantIndex}.images.${index}.altText`}
-                    render={({ field }) => (
-                      <FormItem className="flex-grow">
-                        <FormLabel>Alt Text</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Describe the image" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  /> */}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeImage(index)}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
-              </div>
-            ))}
+                        ))}
+                      </div>
+                      <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={openColorInspector}
+                    >
+                      <Pipette className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={openAddColorModal}
+                      title="Add New Color"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`variants.${variantIndex}.price`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`variants.${variantIndex}.stock`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stock</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() =>
-              appendImage({ imageUrl: "", altText: "", isPrimary: false })
-            }
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Image
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+
+          <div>
+            <Label className="text-sm font-medium">Variant Images</Label>
+
+            <RadioGroup
+              onValueChange={(value) => setPrimaryImage(Number(value))}
+              className="mt-2 space-y-3"
+            >
+              {imageFields.map((field, index) => (
+                <div key={field.id} className="flex items-center gap-4">
+                  <RadioGroupItem
+                    value={String(index)}
+                    id={`primary-${variantIndex}-${index}`}
+                  />
+                  <div className="flex-grow">
+                    <FormField
+                      control={form.control}
+                      name={`variants.${variantIndex}.images.${index}.imageUrl`}
+                      render={({ field: imageField }) => (
+                        <FormItem>
+                          <FormControl>
+                            <ImageUploader
+                              currentImageUrl={imageField.value}
+                              onUploadSuccess={(url) =>
+                                imageField.onChange(url)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  {imageFields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeImage(index)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </RadioGroup>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() =>
+                appendImage({ imageUrl: "", altText: "", isPrimary: false })
+              }
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Image
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }

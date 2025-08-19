@@ -1,14 +1,11 @@
 "use client";
 
-import { useQuery } from "@apollo/client";
-import { GET_PRODUCT_FORM_DATA } from "@/graphql/queries/product";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AddProductForm } from "@/components/organisms/products/AddProductForm/AddProductForm";
+import { ProductForm } from "@/components/organisms/products/ProductForm/ProductForm";
 import { useGetProductFormDataQuery } from "@/graphql/generated";
 
-// Define types for form data
 type Size = { id: string; value: string };
 type Color = { id: string; name: string; hexCode?: string | null };
 type Category = { id: string; name: string };
@@ -34,7 +31,7 @@ export default function AddProductPage() {
         </Button>
         <h1 className="text-3xl font-bold ml-4">Add New Product</h1>
       </div>
-      <AddProductForm
+      <ProductForm
         categories={categories}
         sizes={sizes}
         colors={colors}

@@ -42,6 +42,41 @@ export const GET_PRODUCT_FORM_DATA = gql`
   }
 `;
 
+export const GET_PRODUCT_BY_ID = gql`
+  query GetProductById($id: ID!) {
+    getProductById(id: $id) {
+      id
+      name
+      description
+      categories {
+        id
+        name
+      }
+      variants {
+        id
+        sku
+        price
+        stock
+        size {
+          id
+          value
+        }
+        color {
+          id
+          name
+          hexCode
+        }
+        images {
+          id
+          imageUrl
+          altText
+          isPrimary
+        }
+      }
+    }
+  }
+`;
+
 export const GET_COLORS = gql`
   query GetColors {
     getColors {
