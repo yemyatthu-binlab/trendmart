@@ -109,9 +109,9 @@ export function Sidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  href="#"
+                  href="/admin/categories"
                   className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
-                    isActive("#")
+                    isActive("/admin/categories")
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -209,9 +209,9 @@ export function Sidebar() {
                 Customers
               </Link>
               <Link
-                href="#"
+                href="/admin/categories"
                 className={`flex items-center gap-4 px-2.5 ${
-                  isActive("/admin/dashboard")
+                  isActive("/admin/categories")
                     ? "text-foreground font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}

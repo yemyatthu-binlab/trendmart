@@ -84,6 +84,8 @@ export function VariantFormSection({
     });
   };
 
+  const primaryImageIndex = imageFields.findIndex((field) => field.isPrimary);
+
   const openColorInspector = async () => {
     if (!("EyeDropper" in window)) {
       toast.error("Your browser doesn't support the color inspector tool.");
@@ -242,6 +244,9 @@ export function VariantFormSection({
             <Label className="text-sm font-medium">Variant Images</Label>
 
             <RadioGroup
+              value={
+                primaryImageIndex > -1 ? String(primaryImageIndex) : undefined
+              }
               onValueChange={(value) => setPrimaryImage(Number(value))}
               className="mt-2 space-y-3"
             >

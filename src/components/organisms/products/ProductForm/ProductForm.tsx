@@ -9,8 +9,8 @@ import { Toaster, toast } from "sonner";
 import { useMemo, useState, useEffect } from "react";
 
 import { productFormSchema, type ProductFormValues } from "@/lib/validator";
-import { CREATE_PRODUCT } from "@/graphql/mutation/product";
-import { Category } from "@/graphql/generated";
+import { CREATE_PRODUCT, UPDATE_PRODUCT } from "@/graphql/mutation/product";
+import { Category, Product } from "@/graphql/generated"; // Assuming 'Product' is in your generated types
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,28 @@ import {
 } from "@/components/ui/form";
 import { VariantFormSection } from "../VariantFormSection/VariantFormSection";
 
+export type InitialProductData = Pick<
+  Product,
+  "id" | "name" | "description" | "categories"
+> & {
+  variants: Array<{
+    id: string;
+    sku: string | null;
+    price: number;
+    stock: number;
+    size: { id: string };
+    color: { id: string };
+    images: Array<{
+      id: string;
+      imageUrl: string;
+      altText: string | null;
+      isPrimary: boolean;
+    }>;
+  }>;
+};
+
 interface ProductFormProps {
+  initialData?: InitialProductData | null;
   categories: { id: string; name: string }[];
   subCategories: { id: string; name: string }[];
   sizes: { id: string; value: string }[];
@@ -47,13 +68,21 @@ interface ProductFormProps {
 }
 
 export function ProductForm({
+  initialData,
   categories,
   subCategories,
   sizes,
   colors,
 }: ProductFormProps) {
   const router = useRouter();
-  const [createProduct, { loading }] = useMutation(CREATE_PRODUCT);
+  const isEditMode = !!initialData;
+
+  const [createProduct, { loading: createLoading }] =
+    useMutation(CREATE_PRODUCT);
+  const [updateProduct, { loading: updateLoading }] =
+    useMutation(UPDATE_PRODUCT);
+  const loading = createLoading || updateLoading;
+
   const [selectedMainCategory, setSelectedMainCategory] = useState<Pick<
     Category,
     "id" | "name"
@@ -62,24 +91,49 @@ export function ProductForm({
     Category,
     "id" | "name"
   > | null>(null);
+  
+
+  const transformInitialData = (
+    data: InitialProductData
+  ): ProductFormValues => ({
+    name: data.name,
+    description: data.description || "",
+    categoryIds: data?.categories?.map((c) => Number(c.id)) || [],
+    variants: data.variants.map((v) => ({
+      id: Number(v.id),
+      sizeId: Number(v.size.id),
+      colorId: Number(v.color.id),
+      price: v.price,
+      stock: v.stock,
+      sku: v.sku || "",
+      images: v.images.map((img) => ({
+        id: Number(img.id),
+        imageUrl: img.imageUrl,
+        altText: img.altText || "",
+        isPrimary: img.isPrimary,
+      })),
+    })),
+  });
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema) as any,
-    defaultValues: {
-      name: "",
-      description: "",
-      categoryIds: [],
-      variants: [
-        {
-          sizeId: 0,
-          colorId: 0,
-          price: 0,
-          stock: 0,
-          sku: "",
-          images: [{ imageUrl: "", altText: "", isPrimary: true }],
+    defaultValues: initialData
+      ? transformInitialData(initialData)
+      : {
+          name: "",
+          description: "",
+          categoryIds: [],
+          variants: [
+            {
+              sizeId: 0,
+              colorId: 0,
+              price: 0,
+              stock: 0,
+              sku: "",
+              images: [{ imageUrl: "", altText: "", isPrimary: true }],
+            },
+          ],
         },
-      ],
-    },
   });
 
   const {
@@ -92,7 +146,27 @@ export function ProductForm({
   });
 
   useEffect(() => {
-    if (categories.length > 0 && !selectedMainCategory) {
+    if (isEditMode && initialData) {
+      const mainCat = categories.find((c) =>
+        initialData?.categories?.some((ic) => ic.name === c.name)
+      );
+      if (mainCat) {
+        setSelectedMainCategory(mainCat);
+        const subCatRaw = subCategories.find((sc) =>
+          initialData?.categories?.some(
+            (ic) => ic.id === sc.id && ic.name !== mainCat.name
+          )
+        );
+        if (subCatRaw) {
+          // Add displayName to match the structure of availableSubCategories
+          const subCat = {
+            ...subCatRaw,
+            displayName: subCatRaw.name.replace(mainCat.name, "").trim(),
+          };
+          setSelectedSubCategory(subCat);
+        }
+      }
+    } else if (categories.length > 0 && !selectedMainCategory) {
       handleMainCategoryChange(categories[0].id);
     }
   }, [categories, selectedMainCategory]);
@@ -171,26 +245,31 @@ export function ProductForm({
   const onSubmit = async (values: ProductFormValues) => {
     const inputForGraphQL = {
       ...values,
-      categoryIds: values.categoryIds.map((id) => Number(id)),
       variants: values.variants.map((variant) => ({
         ...variant,
-        sizeId: Number(variant.sizeId),
-        colorId: Number(variant.colorId),
-        price: Math.round(variant.price * 100),
+        price: Math.round(variant.price),
+        ...(isEditMode && 'id' in variant ? { id: (variant as any).id } : {}),
         images: variant.images.map((img) => ({
-          imageUrl: img.imageUrl,
-          altText: img.altText,
-          isPrimary: img.isPrimary,
+          ...img,
+          ...(isEditMode && "id" in img ? { id: (img as any).id } : {}),
         })),
       })),
     };
 
     try {
-      await createProduct({ variables: { input: inputForGraphQL } });
-      toast.success("Product created successfully!");
-      router.push("/admin/products");
+      if (isEditMode) {
+        await updateProduct({
+          variables: { id: initialData.id, input: inputForGraphQL },
+        });
+        toast.success("Product updated successfully!");
+        router.push(`/admin/products`);
+      } else {
+        await createProduct({ variables: { input: inputForGraphQL } });
+        toast.success("Product created successfully!");
+        router.push("/admin/products");
+      }
     } catch (error: any) {
-      toast.error(`Failed to create product: ${error.message}`);
+      toast.error(`Failed to save product: ${error.message}`);
     }
   };
 
@@ -204,9 +283,13 @@ export function ProductForm({
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Product Details</CardTitle>
+                    <CardTitle>
+                      {isEditMode ? "Edit Product" : "Product Details"}
+                    </CardTitle>
                     <CardDescription>
-                      Provide the main details for your product.
+                      {isEditMode
+                        ? "Update the details for your product."
+                        : "Provide the main details for your product."}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -342,7 +425,11 @@ export function ProductForm({
             </div>
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save Product"}
+                {loading
+                  ? "Saving..."
+                  : isEditMode
+                  ? "Save Changes"
+                  : "Save Product"}
               </Button>
             </div>
           </form>

@@ -33,8 +33,10 @@ export type Category = {
   __typename?: 'Category';
   children?: Maybe<Array<Category>>;
   id: Scalars['ID']['output'];
+  isDeletable: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   parent?: Maybe<Category>;
+  sizes?: Maybe<Array<Size>>;
 };
 
 export type Color = {
@@ -69,13 +71,25 @@ export type CreateProductVariantInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  assignSizesToCategory: Category;
   createCategory: Category;
   createColor: Color;
   createProduct: Product;
+  createSize: Size;
+  deleteCategory: SuccessResponse;
+  deleteColor: SuccessResponse;
   deleteProduct: Product;
+  deleteSize: SuccessResponse;
   login: AuthPayload;
+  removeSizeFromCategory: Category;
   updateProduct: Product;
   uploadImage: UploadedImage;
+};
+
+
+export type MutationAssignSizesToCategoryArgs = {
+  categoryId: Scalars['ID']['input'];
+  sizeIds: Array<Scalars['Int']['input']>;
 };
 
 
@@ -96,7 +110,27 @@ export type MutationCreateProductArgs = {
 };
 
 
+export type MutationCreateSizeArgs = {
+  value: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteCategoryArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteColorArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteProductArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteSizeArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -104,6 +138,12 @@ export type MutationDeleteProductArgs = {
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
+};
+
+
+export type MutationRemoveSizeFromCategoryArgs = {
+  categoryId: Scalars['ID']['input'];
+  sizeId: Scalars['ID']['input'];
 };
 
 
@@ -158,10 +198,19 @@ export type Query = {
   __typename?: 'Query';
   _empty?: Maybe<Scalars['String']['output']>;
   getCategories?: Maybe<Array<Category>>;
+  getCategoriesForManagement: Array<Category>;
   getColors?: Maybe<Array<Color>>;
+  getColorsForManagement: Array<Color>;
   getMainSubCategories: Array<Category>;
+  getProductById?: Maybe<Product>;
   getProducts?: Maybe<ProductListResponse>;
   getSizes?: Maybe<Array<Size>>;
+  getUnassignedSizesForCategory: Array<Size>;
+};
+
+
+export type QueryGetProductByIdArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -170,10 +219,21 @@ export type QueryGetProductsArgs = {
   take?: InputMaybe<Scalars['Int']['input']>;
 };
 
+
+export type QueryGetUnassignedSizesForCategoryArgs = {
+  categoryId: Scalars['ID']['input'];
+};
+
 export type Size = {
   __typename?: 'Size';
   id: Scalars['ID']['output'];
   value: Scalars['String']['output'];
+};
+
+export type SuccessResponse = {
+  __typename?: 'SuccessResponse';
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type UpdateProductImageInput = {
@@ -221,12 +281,34 @@ export enum UserRole {
   Customer = 'CUSTOMER'
 }
 
+export type DeleteCategoryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCategoryMutation = { __typename?: 'Mutation', deleteCategory: { __typename?: 'SuccessResponse', success: boolean, message: string } };
+
+export type DeleteColorMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteColorMutation = { __typename?: 'Mutation', deleteColor: { __typename?: 'SuccessResponse', success: boolean, message: string } };
+
 export type CreateProductMutationVariables = Exact<{
   input: CreateProductInput;
 }>;
 
 
 export type CreateProductMutation = { __typename?: 'Mutation', createProduct: { __typename?: 'Product', id: string, name: string } };
+
+export type UpdateProductMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateProductInput;
+}>;
+
+
+export type UpdateProductMutation = { __typename?: 'Mutation', updateProduct: { __typename?: 'Product', id: string } };
 
 export type CreateColorMutationVariables = Exact<{
   name: Scalars['String']['input'];
@@ -258,6 +340,16 @@ export type LoginMutationVariables = Exact<{
 
 export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', token: string, user: { __typename?: 'User', id: string, fullName: string, phoneNumber: string, role: UserRole } } };
 
+export type GetCategoriesForManagementQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetCategoriesForManagementQuery = { __typename?: 'Query', getCategoriesForManagement: Array<{ __typename?: 'Category', id: string, name: string, isDeletable: boolean, children?: Array<{ __typename?: 'Category', id: string, name: string, sizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null }> | null }> };
+
+export type GetColorsForManagementQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetColorsForManagementQuery = { __typename?: 'Query', getColorsForManagement: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> };
+
 export type GetProductsListQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']['input']>;
   take?: InputMaybe<Scalars['Int']['input']>;
@@ -271,12 +363,87 @@ export type GetProductFormDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetProductFormDataQuery = { __typename?: 'Query', getSizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null, getColors?: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> | null, getCategories?: Array<{ __typename?: 'Category', id: string, name: string }> | null, getMainSubCategories: Array<{ __typename?: 'Category', id: string, name: string }> };
 
+export type GetProductByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetProductByIdQuery = { __typename?: 'Query', getProductById?: { __typename?: 'Product', id: string, name: string, description?: string | null, categories?: Array<{ __typename?: 'Category', id: string, name: string }> | null, variants?: Array<{ __typename?: 'ProductVariant', id: string, sku?: string | null, price: number, stock: number, size: { __typename?: 'Size', id: string, value: string }, color: { __typename?: 'Color', id: string, name: string, hexCode?: string | null }, images?: Array<{ __typename?: 'ProductImage', id: string, imageUrl: string, altText?: string | null, isPrimary: boolean }> | null } | null> | null } | null };
+
 export type GetColorsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetColorsQuery = { __typename?: 'Query', getColors?: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> | null };
 
 
+export const DeleteCategoryDocument = gql`
+    mutation DeleteCategory($id: ID!) {
+  deleteCategory(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteCategoryMutationFn = Apollo.MutationFunction<DeleteCategoryMutation, DeleteCategoryMutationVariables>;
+
+/**
+ * __useDeleteCategoryMutation__
+ *
+ * To run a mutation, you first call `useDeleteCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCategoryMutation, { data, loading, error }] = useDeleteCategoryMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteCategoryMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCategoryMutation, DeleteCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCategoryMutation, DeleteCategoryMutationVariables>(DeleteCategoryDocument, options);
+      }
+export type DeleteCategoryMutationHookResult = ReturnType<typeof useDeleteCategoryMutation>;
+export type DeleteCategoryMutationResult = Apollo.MutationResult<DeleteCategoryMutation>;
+export type DeleteCategoryMutationOptions = Apollo.BaseMutationOptions<DeleteCategoryMutation, DeleteCategoryMutationVariables>;
+export const DeleteColorDocument = gql`
+    mutation DeleteColor($id: ID!) {
+  deleteColor(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteColorMutationFn = Apollo.MutationFunction<DeleteColorMutation, DeleteColorMutationVariables>;
+
+/**
+ * __useDeleteColorMutation__
+ *
+ * To run a mutation, you first call `useDeleteColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteColorMutation, { data, loading, error }] = useDeleteColorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteColorMutation(baseOptions?: Apollo.MutationHookOptions<DeleteColorMutation, DeleteColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteColorMutation, DeleteColorMutationVariables>(DeleteColorDocument, options);
+      }
+export type DeleteColorMutationHookResult = ReturnType<typeof useDeleteColorMutation>;
+export type DeleteColorMutationResult = Apollo.MutationResult<DeleteColorMutation>;
+export type DeleteColorMutationOptions = Apollo.BaseMutationOptions<DeleteColorMutation, DeleteColorMutationVariables>;
 export const CreateProductDocument = gql`
     mutation CreateProduct($input: CreateProductInput!) {
   createProduct(input: $input) {
@@ -311,6 +478,40 @@ export function useCreateProductMutation(baseOptions?: Apollo.MutationHookOption
 export type CreateProductMutationHookResult = ReturnType<typeof useCreateProductMutation>;
 export type CreateProductMutationResult = Apollo.MutationResult<CreateProductMutation>;
 export type CreateProductMutationOptions = Apollo.BaseMutationOptions<CreateProductMutation, CreateProductMutationVariables>;
+export const UpdateProductDocument = gql`
+    mutation UpdateProduct($id: ID!, $input: UpdateProductInput!) {
+  updateProduct(id: $id, input: $input) {
+    id
+  }
+}
+    `;
+export type UpdateProductMutationFn = Apollo.MutationFunction<UpdateProductMutation, UpdateProductMutationVariables>;
+
+/**
+ * __useUpdateProductMutation__
+ *
+ * To run a mutation, you first call `useUpdateProductMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateProductMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateProductMutation, { data, loading, error }] = useUpdateProductMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateProductMutation(baseOptions?: Apollo.MutationHookOptions<UpdateProductMutation, UpdateProductMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateProductMutation, UpdateProductMutationVariables>(UpdateProductDocument, options);
+      }
+export type UpdateProductMutationHookResult = ReturnType<typeof useUpdateProductMutation>;
+export type UpdateProductMutationResult = Apollo.MutationResult<UpdateProductMutation>;
+export type UpdateProductMutationOptions = Apollo.BaseMutationOptions<UpdateProductMutation, UpdateProductMutationVariables>;
 export const CreateColorDocument = gql`
     mutation CreateColor($name: String!, $hexCode: String!) {
   createColor(name: $name, hexCode: $hexCode) {
@@ -454,6 +655,96 @@ export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginM
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const GetCategoriesForManagementDocument = gql`
+    query GetCategoriesForManagement {
+  getCategoriesForManagement {
+    id
+    name
+    isDeletable
+    children {
+      id
+      name
+      sizes {
+        id
+        value
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetCategoriesForManagementQuery__
+ *
+ * To run a query within a React component, call `useGetCategoriesForManagementQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCategoriesForManagementQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCategoriesForManagementQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetCategoriesForManagementQuery(baseOptions?: Apollo.QueryHookOptions<GetCategoriesForManagementQuery, GetCategoriesForManagementQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCategoriesForManagementQuery, GetCategoriesForManagementQueryVariables>(GetCategoriesForManagementDocument, options);
+      }
+export function useGetCategoriesForManagementLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCategoriesForManagementQuery, GetCategoriesForManagementQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCategoriesForManagementQuery, GetCategoriesForManagementQueryVariables>(GetCategoriesForManagementDocument, options);
+        }
+export function useGetCategoriesForManagementSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCategoriesForManagementQuery, GetCategoriesForManagementQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCategoriesForManagementQuery, GetCategoriesForManagementQueryVariables>(GetCategoriesForManagementDocument, options);
+        }
+export type GetCategoriesForManagementQueryHookResult = ReturnType<typeof useGetCategoriesForManagementQuery>;
+export type GetCategoriesForManagementLazyQueryHookResult = ReturnType<typeof useGetCategoriesForManagementLazyQuery>;
+export type GetCategoriesForManagementSuspenseQueryHookResult = ReturnType<typeof useGetCategoriesForManagementSuspenseQuery>;
+export type GetCategoriesForManagementQueryResult = Apollo.QueryResult<GetCategoriesForManagementQuery, GetCategoriesForManagementQueryVariables>;
+export const GetColorsForManagementDocument = gql`
+    query GetColorsForManagement {
+  getColorsForManagement {
+    id
+    name
+    hexCode
+  }
+}
+    `;
+
+/**
+ * __useGetColorsForManagementQuery__
+ *
+ * To run a query within a React component, call `useGetColorsForManagementQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetColorsForManagementQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetColorsForManagementQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetColorsForManagementQuery(baseOptions?: Apollo.QueryHookOptions<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>(GetColorsForManagementDocument, options);
+      }
+export function useGetColorsForManagementLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>(GetColorsForManagementDocument, options);
+        }
+export function useGetColorsForManagementSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>(GetColorsForManagementDocument, options);
+        }
+export type GetColorsForManagementQueryHookResult = ReturnType<typeof useGetColorsForManagementQuery>;
+export type GetColorsForManagementLazyQueryHookResult = ReturnType<typeof useGetColorsForManagementLazyQuery>;
+export type GetColorsForManagementSuspenseQueryHookResult = ReturnType<typeof useGetColorsForManagementSuspenseQuery>;
+export type GetColorsForManagementQueryResult = Apollo.QueryResult<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>;
 export const GetProductsListDocument = gql`
     query GetProductsList($skip: Int, $take: Int) {
   getProducts(skip: $skip, take: $take) {
@@ -560,6 +851,73 @@ export type GetProductFormDataQueryHookResult = ReturnType<typeof useGetProductF
 export type GetProductFormDataLazyQueryHookResult = ReturnType<typeof useGetProductFormDataLazyQuery>;
 export type GetProductFormDataSuspenseQueryHookResult = ReturnType<typeof useGetProductFormDataSuspenseQuery>;
 export type GetProductFormDataQueryResult = Apollo.QueryResult<GetProductFormDataQuery, GetProductFormDataQueryVariables>;
+export const GetProductByIdDocument = gql`
+    query GetProductById($id: ID!) {
+  getProductById(id: $id) {
+    id
+    name
+    description
+    categories {
+      id
+      name
+    }
+    variants {
+      id
+      sku
+      price
+      stock
+      size {
+        id
+        value
+      }
+      color {
+        id
+        name
+        hexCode
+      }
+      images {
+        id
+        imageUrl
+        altText
+        isPrimary
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetProductByIdQuery__
+ *
+ * To run a query within a React component, call `useGetProductByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProductByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProductByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetProductByIdQuery(baseOptions: Apollo.QueryHookOptions<GetProductByIdQuery, GetProductByIdQueryVariables> & ({ variables: GetProductByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetProductByIdQuery, GetProductByIdQueryVariables>(GetProductByIdDocument, options);
+      }
+export function useGetProductByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProductByIdQuery, GetProductByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetProductByIdQuery, GetProductByIdQueryVariables>(GetProductByIdDocument, options);
+        }
+export function useGetProductByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetProductByIdQuery, GetProductByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetProductByIdQuery, GetProductByIdQueryVariables>(GetProductByIdDocument, options);
+        }
+export type GetProductByIdQueryHookResult = ReturnType<typeof useGetProductByIdQuery>;
+export type GetProductByIdLazyQueryHookResult = ReturnType<typeof useGetProductByIdLazyQuery>;
+export type GetProductByIdSuspenseQueryHookResult = ReturnType<typeof useGetProductByIdSuspenseQuery>;
+export type GetProductByIdQueryResult = Apollo.QueryResult<GetProductByIdQuery, GetProductByIdQueryVariables>;
 export const GetColorsDocument = gql`
     query GetColors {
   getColors {

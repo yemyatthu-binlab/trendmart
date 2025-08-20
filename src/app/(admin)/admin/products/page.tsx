@@ -161,7 +161,12 @@ export default function ProductsPage() {
                       products.map((product) => (
                         <TableRow key={product?.id}>
                           <TableCell className="font-medium">
-                            {product?.name}
+                            <Link
+                              href={`/admin/products/${product?.id}`}
+                              className="text-black hover:text-gray-500 cursor-pointer transition-colors"
+                            >
+                              {product?.name}
+                            </Link>
                           </TableCell>
                           <TableCell>
                             {product?.categories?.map((c) => c.name).join(", ")}
@@ -170,7 +175,11 @@ export default function ProductsPage() {
                           <TableCell>
                             {new Date(
                               product?.createdAt || ""
-                            ).toLocaleDateString()}
+                            ).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
