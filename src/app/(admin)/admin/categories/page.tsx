@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Trash2,
-  PlusCircle,
-  AlertCircle,
-  Palette,
-  LayoutGrid,
-} from "lucide-react";
+import { Trash2, PlusCircle, Palette, LayoutGrid, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -44,6 +38,9 @@ import {
   useDeleteCategoryMutation,
   useDeleteColorMutation,
 } from "@/graphql/generated";
+import { AddEditColorModal } from "@/components/molecules/products/AddEditColorModal/AddEditColorModal";
+import { AddSubCategoryModal } from "@/components/molecules/products/AddSubCategoryModal/AddSubCategoryModal";
+import { ManageSizesModal } from "@/components/molecules/products/ManageSizesModal/ManageSizesModal";
 
 // Placeholder types for data - generated types are better
 type Category = {
@@ -52,7 +49,7 @@ type Category = {
   isDeletable: boolean;
   children: SubCategory[];
 };
-type SubCategory = {
+export type SubCategory = {
   id: string;
   name: string;
   sizes: Size[];
@@ -62,6 +59,18 @@ type Color = { id: string; name: string; hexCode?: string | null };
 
 export default function CategoriesPage() {
   const [activeTab, setActiveTab] = useState("categories");
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+  const [colorToEdit, setColorToEdit] = useState<Color | null>(null);
+
+  const [isSubCategoryModalOpen, setIsSubCategoryModalOpen] = useState(false);
+  const [parentCategory, setParentCategory] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
+  const [subCategoryToManage, setSubCategoryToManage] =
+    useState<SubCategory | null>(null);
 
   // --- Category Data ---
   const {
@@ -89,21 +98,67 @@ export default function CategoriesPage() {
     onError: (error) => toast.error(error.message),
   });
 
-  const handleDeleteCategory = (category: Category) => {
-    if (!category.isDeletable) {
+  const handleDeleteCategory = (id: string, isDeletable: boolean) => {
+    console.log("idDeletable::", id, isDeletable);
+    if (!isDeletable) {
       toast.error("This category cannot be deleted.");
       return;
     }
-    deleteCategory({ variables: { id: category.id } });
+    deleteCategory({ variables: { id } });
+  };
+
+  const handleDeleteSubCategory = (id: string) => {
+    // Re-using the same mutation, the backend logic differentiates them
+    deleteCategory({ variables: { id } });
   };
 
   const handleDeleteColor = (colorId: string) => {
     deleteColor({ variables: { id: colorId } });
   };
 
+  const handleOpenAddSubCategory = (category: Category) => {
+    setParentCategory({ id: parseInt(category.id, 10), name: category.name });
+    setIsSubCategoryModalOpen(true);
+  };
+
+  const handleOpenManageSizes = (subCategory: SubCategory) => {
+    setSubCategoryToManage(subCategory);
+    setIsSizeModalOpen(true);
+  };
+
+  const handleOpenEditColor = (color: Color) => {
+    setColorToEdit(color);
+    setIsColorModalOpen(true);
+  };
+
+  const handleOpenAddColor = () => {
+    setColorToEdit(null);
+    setIsColorModalOpen(true);
+  };
+
   return (
     <>
       <Toaster position="top-center" richColors />
+      {/* --- Modals --- */}
+      <AddEditColorModal
+        open={isColorModalOpen}
+        onOpenChange={setIsColorModalOpen}
+        colorToEdit={colorToEdit}
+      />
+      {parentCategory && (
+        <AddSubCategoryModal
+          open={isSubCategoryModalOpen}
+          onOpenChange={setIsSubCategoryModalOpen}
+          parentId={parentCategory.id}
+          parentName={parentCategory.name}
+        />
+      )}
+      <ManageSizesModal
+        open={isSizeModalOpen}
+        onOpenChange={setIsSizeModalOpen}
+        subCategory={subCategoryToManage!}
+      />
+
       <div className="container mx-auto sm:py-8">
         <Sidebar />
         <div className="mx-5 sm:ml-10">
@@ -114,7 +169,6 @@ export default function CategoriesPage() {
                 Manage categories, sizes, and colors.
               </p>
             </div>
-            {/* Add universal "Add New" button here if desired */}
           </div>
 
           <Tabs
@@ -122,23 +176,23 @@ export default function CategoriesPage() {
             onValueChange={setActiveTab}
             defaultValue="categories"
           >
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 lg:w-[450px]">
               <TabsTrigger value="categories">
-                <LayoutGrid className="mr-2 h-4 w-4" /> Categories & Sizes
+                <LayoutGrid className="mr-2 h-5 w-5" /> Categories & Sizes
               </TabsTrigger>
               <TabsTrigger value="colors">
-                <Palette className="mr-2 h-4 w-4" /> Colors
+                <Palette className="mr-2 h-5 w-5" /> Colors
               </TabsTrigger>
             </TabsList>
 
-            {/* CATEGORIES TAB CONTENT */}
+            {/* CATEGORIES TAB */}
             <TabsContent value="categories">
               <Card>
                 <CardHeader>
                   <CardTitle>Category Management</CardTitle>
                   <CardDescription>
-                    View and manage main categories, sub-categories, and their
-                    linked sizes.
+                    Manage main categories, sub-categories, and their linked
+                    sizes.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -155,18 +209,20 @@ export default function CategoriesPage() {
                             {category.name}
                           </h3>
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleOpenAddSubCategory(category as Category)
+                              }
+                            >
                               <PlusCircle className="mr-2 h-4 w-4" /> Add
                               Sub-Category
                             </Button>
                             {category.isDeletable && (
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    disabled={!category.isDeletable}
-                                  >
+                                  <Button variant="destructive" size="sm">
                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                                   </Button>
                                 </AlertDialogTrigger>
@@ -188,7 +244,10 @@ export default function CategoriesPage() {
                                     </AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() =>
-                                        handleDeleteCategory(category)
+                                        handleDeleteCategory(
+                                          category.id,
+                                          category.isDeletable
+                                        )
                                       }
                                     >
                                       Continue
@@ -199,8 +258,6 @@ export default function CategoriesPage() {
                             )}
                           </div>
                         </div>
-
-                        {/* Sub-Category Table */}
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -222,25 +279,68 @@ export default function CategoriesPage() {
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex flex-wrap gap-1">
-                                      {(sub.sizes ?? []).map((size) => (
+                                      {sub.sizes?.map((size) => (
                                         <span
                                           key={size.id}
                                           className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full"
                                         >
                                           {size.value}
                                         </span>
-                                      ))}
-                                      {(sub.sizes?.length ?? 0) === 0 && (
+                                      )) ?? (
                                         <span className="text-xs text-muted-foreground">
                                           No sizes linked
                                         </span>
                                       )}
                                     </div>
                                   </TableCell>
-                                  <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm">
-                                      Edit Sizes
+                                  <TableCell className="text-right flex justify-end gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleOpenManageSizes(
+                                          sub as SubCategory
+                                        )
+                                      }
+                                      className="bg-black/10 hover:bg-black/10 rounded-full mr-1"
+                                    >
+                                      <Pencil className="h-4 w-4" />
                                     </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="bg-black/10 hover:bg-black/10 rounded-full"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>
+                                            Delete &quot;{sub.name}&quot;?
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. If
+                                            this sub-category is in use by a
+                                            product, deletion will fail.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>
+                                            Cancel
+                                          </AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() =>
+                                              handleDeleteSubCategory(sub.id)
+                                            }
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                   </TableCell>
                                 </TableRow>
                               ))
@@ -263,7 +363,7 @@ export default function CategoriesPage() {
               </Card>
             </TabsContent>
 
-            {/* COLORS TAB CONTENT */}
+            {/* COLORS TAB */}
             <TabsContent value="colors">
               <Card>
                 <CardHeader>
@@ -274,7 +374,7 @@ export default function CategoriesPage() {
                         Add or remove colors available for products.
                       </CardDescription>
                     </div>
-                    <Button size="sm">
+                    <Button size="sm" onClick={handleOpenAddColor}>
                       <PlusCircle className="mr-2 h-4 w-4" /> Add Color
                     </Button>
                   </div>
@@ -309,12 +409,22 @@ export default function CategoriesPage() {
                             {color.hexCode}
                           </TableCell>
                           <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                handleOpenEditColor(color as Color)
+                              }
+                              className="bg-black/10 hover:bg-black/20 rounded-full mr-1"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-red-600 hover:text-red-700"
+                                  className="bg-black/10 hover:bg-black/20 rounded-full"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>

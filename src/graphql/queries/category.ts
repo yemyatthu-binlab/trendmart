@@ -27,3 +27,12 @@ export const GET_COLORS_FOR_MANAGEMENT = gql`
     }
   }
 `;
+
+export const GET_UNASSIGNED_SIZES_FOR_CATEGORY = gql`
+  query GetUnassignedSizesForCategory($subCategoryId: ID!) {
+    getUnassignedSizesForCategory(subCategoryId: $subCategoryId) {
+      id
+      value
+    }
+  }
+`;

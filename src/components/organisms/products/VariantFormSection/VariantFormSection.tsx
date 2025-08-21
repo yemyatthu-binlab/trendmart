@@ -147,7 +147,7 @@ export function VariantFormSection({
                     <SelectContent>
                       {sizes.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
-                          {s.value.split("_")[1]}
+                          {s.value}
                         </SelectItem>
                       ))}
                     </SelectContent>

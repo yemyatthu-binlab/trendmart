@@ -71,7 +71,7 @@ export type CreateProductVariantInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  assignSizesToCategory: Category;
+  assignSizesToSubCategory: Category;
   createCategory: Category;
   createColor: Color;
   createProduct: Product;
@@ -81,15 +81,18 @@ export type Mutation = {
   deleteProduct: Product;
   deleteSize: SuccessResponse;
   login: AuthPayload;
-  removeSizeFromCategory: Category;
+  removeSizeFromSubCategory: Category;
+  updateCategory: Category;
+  updateColor: Color;
   updateProduct: Product;
+  updateSize: Size;
   uploadImage: UploadedImage;
 };
 
 
-export type MutationAssignSizesToCategoryArgs = {
-  categoryId: Scalars['ID']['input'];
+export type MutationAssignSizesToSubCategoryArgs = {
   sizeIds: Array<Scalars['Int']['input']>;
+  subCategoryId: Scalars['ID']['input'];
 };
 
 
@@ -141,15 +144,34 @@ export type MutationLoginArgs = {
 };
 
 
-export type MutationRemoveSizeFromCategoryArgs = {
-  categoryId: Scalars['ID']['input'];
+export type MutationRemoveSizeFromSubCategoryArgs = {
   sizeId: Scalars['ID']['input'];
+  subCategoryId: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateCategoryArgs = {
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateColorArgs = {
+  hexCode?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type MutationUpdateProductArgs = {
   id: Scalars['ID']['input'];
   input: UpdateProductInput;
+};
+
+
+export type MutationUpdateSizeArgs = {
+  id: Scalars['ID']['input'];
+  value: Scalars['String']['input'];
 };
 
 
@@ -221,7 +243,7 @@ export type QueryGetProductsArgs = {
 
 
 export type QueryGetUnassignedSizesForCategoryArgs = {
-  categoryId: Scalars['ID']['input'];
+  subCategoryId: Scalars['ID']['input'];
 };
 
 export type Size = {
@@ -281,6 +303,14 @@ export enum UserRole {
   Customer = 'CUSTOMER'
 }
 
+export type CreateCategoryMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type CreateCategoryMutation = { __typename?: 'Mutation', createCategory: { __typename?: 'Category', id: string, name: string, isDeletable: boolean, children?: Array<{ __typename?: 'Category', id: string }> | null, sizes?: Array<{ __typename?: 'Size', id: string }> | null } };
+
 export type DeleteCategoryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -288,12 +318,52 @@ export type DeleteCategoryMutationVariables = Exact<{
 
 export type DeleteCategoryMutation = { __typename?: 'Mutation', deleteCategory: { __typename?: 'SuccessResponse', success: boolean, message: string } };
 
+export type CreateColorMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  hexCode: Scalars['String']['input'];
+}>;
+
+
+export type CreateColorMutation = { __typename?: 'Mutation', createColor: { __typename?: 'Color', id: string, name: string, hexCode?: string | null } };
+
+export type UpdateColorMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  hexCode?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type UpdateColorMutation = { __typename?: 'Mutation', updateColor: { __typename?: 'Color', id: string, name: string, hexCode?: string | null } };
+
 export type DeleteColorMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
 export type DeleteColorMutation = { __typename?: 'Mutation', deleteColor: { __typename?: 'SuccessResponse', success: boolean, message: string } };
+
+export type AssignSizesToSubCategoryMutationVariables = Exact<{
+  subCategoryId: Scalars['ID']['input'];
+  sizeIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
+}>;
+
+
+export type AssignSizesToSubCategoryMutation = { __typename?: 'Mutation', assignSizesToSubCategory: { __typename?: 'Category', id: string, sizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null } };
+
+export type RemoveSizeFromSubCategoryMutationVariables = Exact<{
+  subCategoryId: Scalars['ID']['input'];
+  sizeId: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveSizeFromSubCategoryMutation = { __typename?: 'Mutation', removeSizeFromSubCategory: { __typename?: 'Category', id: string, sizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null } };
+
+export type CreateSizeMutationVariables = Exact<{
+  value: Scalars['String']['input'];
+}>;
+
+
+export type CreateSizeMutation = { __typename?: 'Mutation', createSize: { __typename?: 'Size', id: string, value: string } };
 
 export type CreateProductMutationVariables = Exact<{
   input: CreateProductInput;
@@ -309,14 +379,6 @@ export type UpdateProductMutationVariables = Exact<{
 
 
 export type UpdateProductMutation = { __typename?: 'Mutation', updateProduct: { __typename?: 'Product', id: string } };
-
-export type CreateColorMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  hexCode: Scalars['String']['input'];
-}>;
-
-
-export type CreateColorMutation = { __typename?: 'Mutation', createColor: { __typename?: 'Color', id: string, name: string, hexCode?: string | null } };
 
 export type UploadImageMutationVariables = Exact<{
   file: Scalars['Upload']['input'];
@@ -350,6 +412,13 @@ export type GetColorsForManagementQueryVariables = Exact<{ [key: string]: never;
 
 export type GetColorsForManagementQuery = { __typename?: 'Query', getColorsForManagement: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> };
 
+export type GetUnassignedSizesForCategoryQueryVariables = Exact<{
+  subCategoryId: Scalars['ID']['input'];
+}>;
+
+
+export type GetUnassignedSizesForCategoryQuery = { __typename?: 'Query', getUnassignedSizesForCategory: Array<{ __typename?: 'Size', id: string, value: string }> };
+
 export type GetProductsListQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']['input']>;
   take?: InputMaybe<Scalars['Int']['input']>;
@@ -361,7 +430,7 @@ export type GetProductsListQuery = { __typename?: 'Query', getProducts?: { __typ
 export type GetProductFormDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProductFormDataQuery = { __typename?: 'Query', getSizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null, getColors?: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> | null, getCategories?: Array<{ __typename?: 'Category', id: string, name: string }> | null, getMainSubCategories: Array<{ __typename?: 'Category', id: string, name: string }> };
+export type GetProductFormDataQuery = { __typename?: 'Query', getSizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null, getColors?: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> | null, getCategories?: Array<{ __typename?: 'Category', id: string, name: string }> | null, getMainSubCategories: Array<{ __typename?: 'Category', id: string, name: string, sizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null }> };
 
 export type GetProductByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -376,6 +445,48 @@ export type GetColorsQueryVariables = Exact<{ [key: string]: never; }>;
 export type GetColorsQuery = { __typename?: 'Query', getColors?: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> | null };
 
 
+export const CreateCategoryDocument = gql`
+    mutation CreateCategory($name: String!, $parentId: Int) {
+  createCategory(name: $name, parentId: $parentId) {
+    id
+    name
+    isDeletable
+    children {
+      id
+    }
+    sizes {
+      id
+    }
+  }
+}
+    `;
+export type CreateCategoryMutationFn = Apollo.MutationFunction<CreateCategoryMutation, CreateCategoryMutationVariables>;
+
+/**
+ * __useCreateCategoryMutation__
+ *
+ * To run a mutation, you first call `useCreateCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCategoryMutation, { data, loading, error }] = useCreateCategoryMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      parentId: // value for 'parentId'
+ *   },
+ * });
+ */
+export function useCreateCategoryMutation(baseOptions?: Apollo.MutationHookOptions<CreateCategoryMutation, CreateCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCategoryMutation, CreateCategoryMutationVariables>(CreateCategoryDocument, options);
+      }
+export type CreateCategoryMutationHookResult = ReturnType<typeof useCreateCategoryMutation>;
+export type CreateCategoryMutationResult = Apollo.MutationResult<CreateCategoryMutation>;
+export type CreateCategoryMutationOptions = Apollo.BaseMutationOptions<CreateCategoryMutation, CreateCategoryMutationVariables>;
 export const DeleteCategoryDocument = gql`
     mutation DeleteCategory($id: ID!) {
   deleteCategory(id: $id) {
@@ -410,6 +521,79 @@ export function useDeleteCategoryMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteCategoryMutationHookResult = ReturnType<typeof useDeleteCategoryMutation>;
 export type DeleteCategoryMutationResult = Apollo.MutationResult<DeleteCategoryMutation>;
 export type DeleteCategoryMutationOptions = Apollo.BaseMutationOptions<DeleteCategoryMutation, DeleteCategoryMutationVariables>;
+export const CreateColorDocument = gql`
+    mutation CreateColor($name: String!, $hexCode: String!) {
+  createColor(name: $name, hexCode: $hexCode) {
+    id
+    name
+    hexCode
+  }
+}
+    `;
+export type CreateColorMutationFn = Apollo.MutationFunction<CreateColorMutation, CreateColorMutationVariables>;
+
+/**
+ * __useCreateColorMutation__
+ *
+ * To run a mutation, you first call `useCreateColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createColorMutation, { data, loading, error }] = useCreateColorMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      hexCode: // value for 'hexCode'
+ *   },
+ * });
+ */
+export function useCreateColorMutation(baseOptions?: Apollo.MutationHookOptions<CreateColorMutation, CreateColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateColorMutation, CreateColorMutationVariables>(CreateColorDocument, options);
+      }
+export type CreateColorMutationHookResult = ReturnType<typeof useCreateColorMutation>;
+export type CreateColorMutationResult = Apollo.MutationResult<CreateColorMutation>;
+export type CreateColorMutationOptions = Apollo.BaseMutationOptions<CreateColorMutation, CreateColorMutationVariables>;
+export const UpdateColorDocument = gql`
+    mutation UpdateColor($id: ID!, $name: String, $hexCode: String) {
+  updateColor(id: $id, name: $name, hexCode: $hexCode) {
+    id
+    name
+    hexCode
+  }
+}
+    `;
+export type UpdateColorMutationFn = Apollo.MutationFunction<UpdateColorMutation, UpdateColorMutationVariables>;
+
+/**
+ * __useUpdateColorMutation__
+ *
+ * To run a mutation, you first call `useUpdateColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateColorMutation, { data, loading, error }] = useUpdateColorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *      hexCode: // value for 'hexCode'
+ *   },
+ * });
+ */
+export function useUpdateColorMutation(baseOptions?: Apollo.MutationHookOptions<UpdateColorMutation, UpdateColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateColorMutation, UpdateColorMutationVariables>(UpdateColorDocument, options);
+      }
+export type UpdateColorMutationHookResult = ReturnType<typeof useUpdateColorMutation>;
+export type UpdateColorMutationResult = Apollo.MutationResult<UpdateColorMutation>;
+export type UpdateColorMutationOptions = Apollo.BaseMutationOptions<UpdateColorMutation, UpdateColorMutationVariables>;
 export const DeleteColorDocument = gql`
     mutation DeleteColor($id: ID!) {
   deleteColor(id: $id) {
@@ -444,6 +628,116 @@ export function useDeleteColorMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteColorMutationHookResult = ReturnType<typeof useDeleteColorMutation>;
 export type DeleteColorMutationResult = Apollo.MutationResult<DeleteColorMutation>;
 export type DeleteColorMutationOptions = Apollo.BaseMutationOptions<DeleteColorMutation, DeleteColorMutationVariables>;
+export const AssignSizesToSubCategoryDocument = gql`
+    mutation AssignSizesToSubCategory($subCategoryId: ID!, $sizeIds: [Int!]!) {
+  assignSizesToSubCategory(subCategoryId: $subCategoryId, sizeIds: $sizeIds) {
+    id
+    sizes {
+      id
+      value
+    }
+  }
+}
+    `;
+export type AssignSizesToSubCategoryMutationFn = Apollo.MutationFunction<AssignSizesToSubCategoryMutation, AssignSizesToSubCategoryMutationVariables>;
+
+/**
+ * __useAssignSizesToSubCategoryMutation__
+ *
+ * To run a mutation, you first call `useAssignSizesToSubCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssignSizesToSubCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [assignSizesToSubCategoryMutation, { data, loading, error }] = useAssignSizesToSubCategoryMutation({
+ *   variables: {
+ *      subCategoryId: // value for 'subCategoryId'
+ *      sizeIds: // value for 'sizeIds'
+ *   },
+ * });
+ */
+export function useAssignSizesToSubCategoryMutation(baseOptions?: Apollo.MutationHookOptions<AssignSizesToSubCategoryMutation, AssignSizesToSubCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AssignSizesToSubCategoryMutation, AssignSizesToSubCategoryMutationVariables>(AssignSizesToSubCategoryDocument, options);
+      }
+export type AssignSizesToSubCategoryMutationHookResult = ReturnType<typeof useAssignSizesToSubCategoryMutation>;
+export type AssignSizesToSubCategoryMutationResult = Apollo.MutationResult<AssignSizesToSubCategoryMutation>;
+export type AssignSizesToSubCategoryMutationOptions = Apollo.BaseMutationOptions<AssignSizesToSubCategoryMutation, AssignSizesToSubCategoryMutationVariables>;
+export const RemoveSizeFromSubCategoryDocument = gql`
+    mutation RemoveSizeFromSubCategory($subCategoryId: ID!, $sizeId: ID!) {
+  removeSizeFromSubCategory(subCategoryId: $subCategoryId, sizeId: $sizeId) {
+    id
+    sizes {
+      id
+      value
+    }
+  }
+}
+    `;
+export type RemoveSizeFromSubCategoryMutationFn = Apollo.MutationFunction<RemoveSizeFromSubCategoryMutation, RemoveSizeFromSubCategoryMutationVariables>;
+
+/**
+ * __useRemoveSizeFromSubCategoryMutation__
+ *
+ * To run a mutation, you first call `useRemoveSizeFromSubCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveSizeFromSubCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeSizeFromSubCategoryMutation, { data, loading, error }] = useRemoveSizeFromSubCategoryMutation({
+ *   variables: {
+ *      subCategoryId: // value for 'subCategoryId'
+ *      sizeId: // value for 'sizeId'
+ *   },
+ * });
+ */
+export function useRemoveSizeFromSubCategoryMutation(baseOptions?: Apollo.MutationHookOptions<RemoveSizeFromSubCategoryMutation, RemoveSizeFromSubCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveSizeFromSubCategoryMutation, RemoveSizeFromSubCategoryMutationVariables>(RemoveSizeFromSubCategoryDocument, options);
+      }
+export type RemoveSizeFromSubCategoryMutationHookResult = ReturnType<typeof useRemoveSizeFromSubCategoryMutation>;
+export type RemoveSizeFromSubCategoryMutationResult = Apollo.MutationResult<RemoveSizeFromSubCategoryMutation>;
+export type RemoveSizeFromSubCategoryMutationOptions = Apollo.BaseMutationOptions<RemoveSizeFromSubCategoryMutation, RemoveSizeFromSubCategoryMutationVariables>;
+export const CreateSizeDocument = gql`
+    mutation CreateSize($value: String!) {
+  createSize(value: $value) {
+    id
+    value
+  }
+}
+    `;
+export type CreateSizeMutationFn = Apollo.MutationFunction<CreateSizeMutation, CreateSizeMutationVariables>;
+
+/**
+ * __useCreateSizeMutation__
+ *
+ * To run a mutation, you first call `useCreateSizeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSizeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSizeMutation, { data, loading, error }] = useCreateSizeMutation({
+ *   variables: {
+ *      value: // value for 'value'
+ *   },
+ * });
+ */
+export function useCreateSizeMutation(baseOptions?: Apollo.MutationHookOptions<CreateSizeMutation, CreateSizeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateSizeMutation, CreateSizeMutationVariables>(CreateSizeDocument, options);
+      }
+export type CreateSizeMutationHookResult = ReturnType<typeof useCreateSizeMutation>;
+export type CreateSizeMutationResult = Apollo.MutationResult<CreateSizeMutation>;
+export type CreateSizeMutationOptions = Apollo.BaseMutationOptions<CreateSizeMutation, CreateSizeMutationVariables>;
 export const CreateProductDocument = gql`
     mutation CreateProduct($input: CreateProductInput!) {
   createProduct(input: $input) {
@@ -512,42 +806,6 @@ export function useUpdateProductMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdateProductMutationHookResult = ReturnType<typeof useUpdateProductMutation>;
 export type UpdateProductMutationResult = Apollo.MutationResult<UpdateProductMutation>;
 export type UpdateProductMutationOptions = Apollo.BaseMutationOptions<UpdateProductMutation, UpdateProductMutationVariables>;
-export const CreateColorDocument = gql`
-    mutation CreateColor($name: String!, $hexCode: String!) {
-  createColor(name: $name, hexCode: $hexCode) {
-    id
-    name
-    hexCode
-  }
-}
-    `;
-export type CreateColorMutationFn = Apollo.MutationFunction<CreateColorMutation, CreateColorMutationVariables>;
-
-/**
- * __useCreateColorMutation__
- *
- * To run a mutation, you first call `useCreateColorMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateColorMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createColorMutation, { data, loading, error }] = useCreateColorMutation({
- *   variables: {
- *      name: // value for 'name'
- *      hexCode: // value for 'hexCode'
- *   },
- * });
- */
-export function useCreateColorMutation(baseOptions?: Apollo.MutationHookOptions<CreateColorMutation, CreateColorMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateColorMutation, CreateColorMutationVariables>(CreateColorDocument, options);
-      }
-export type CreateColorMutationHookResult = ReturnType<typeof useCreateColorMutation>;
-export type CreateColorMutationResult = Apollo.MutationResult<CreateColorMutation>;
-export type CreateColorMutationOptions = Apollo.BaseMutationOptions<CreateColorMutation, CreateColorMutationVariables>;
 export const UploadImageDocument = gql`
     mutation UploadImage($file: Upload!) {
   uploadImage(file: $file) {
@@ -745,6 +1003,47 @@ export type GetColorsForManagementQueryHookResult = ReturnType<typeof useGetColo
 export type GetColorsForManagementLazyQueryHookResult = ReturnType<typeof useGetColorsForManagementLazyQuery>;
 export type GetColorsForManagementSuspenseQueryHookResult = ReturnType<typeof useGetColorsForManagementSuspenseQuery>;
 export type GetColorsForManagementQueryResult = Apollo.QueryResult<GetColorsForManagementQuery, GetColorsForManagementQueryVariables>;
+export const GetUnassignedSizesForCategoryDocument = gql`
+    query GetUnassignedSizesForCategory($subCategoryId: ID!) {
+  getUnassignedSizesForCategory(subCategoryId: $subCategoryId) {
+    id
+    value
+  }
+}
+    `;
+
+/**
+ * __useGetUnassignedSizesForCategoryQuery__
+ *
+ * To run a query within a React component, call `useGetUnassignedSizesForCategoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUnassignedSizesForCategoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUnassignedSizesForCategoryQuery({
+ *   variables: {
+ *      subCategoryId: // value for 'subCategoryId'
+ *   },
+ * });
+ */
+export function useGetUnassignedSizesForCategoryQuery(baseOptions: Apollo.QueryHookOptions<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables> & ({ variables: GetUnassignedSizesForCategoryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables>(GetUnassignedSizesForCategoryDocument, options);
+      }
+export function useGetUnassignedSizesForCategoryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables>(GetUnassignedSizesForCategoryDocument, options);
+        }
+export function useGetUnassignedSizesForCategorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables>(GetUnassignedSizesForCategoryDocument, options);
+        }
+export type GetUnassignedSizesForCategoryQueryHookResult = ReturnType<typeof useGetUnassignedSizesForCategoryQuery>;
+export type GetUnassignedSizesForCategoryLazyQueryHookResult = ReturnType<typeof useGetUnassignedSizesForCategoryLazyQuery>;
+export type GetUnassignedSizesForCategorySuspenseQueryHookResult = ReturnType<typeof useGetUnassignedSizesForCategorySuspenseQuery>;
+export type GetUnassignedSizesForCategoryQueryResult = Apollo.QueryResult<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables>;
 export const GetProductsListDocument = gql`
     query GetProductsList($skip: Int, $take: Int) {
   getProducts(skip: $skip, take: $take) {
@@ -816,6 +1115,10 @@ export const GetProductFormDataDocument = gql`
   getMainSubCategories {
     id
     name
+    sizes {
+      id
+      value
+    }
   }
 }
     `;

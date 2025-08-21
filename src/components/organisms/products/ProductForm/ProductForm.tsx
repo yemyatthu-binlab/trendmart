@@ -71,7 +71,6 @@ export function ProductForm({
   initialData,
   categories,
   subCategories,
-  sizes,
   colors,
 }: ProductFormProps) {
   const router = useRouter();
@@ -91,7 +90,6 @@ export function ProductForm({
     Category,
     "id" | "name"
   > | null>(null);
-  
 
   const transformInitialData = (
     data: InitialProductData
@@ -189,12 +187,15 @@ export function ProductForm({
 
   const availableSizes = useMemo(() => {
     if (!selectedSubCategory) return [];
-    const subCategoryType = selectedSubCategory.name
-      .split(" ")[1]
-      ?.toUpperCase();
-    if (!subCategoryType) return [];
-    return sizes.filter((size) => size.value.startsWith(subCategoryType));
-  }, [selectedSubCategory, sizes]);
+    const fullSubCategoryData = subCategories.find(
+      (sc) => sc.id === selectedSubCategory.id
+    );
+
+    // If sizes property exists, return it; otherwise, return an empty array
+    return (fullSubCategoryData && 'sizes' in fullSubCategoryData && Array.isArray((fullSubCategoryData as any).sizes))
+      ? (fullSubCategoryData as any).sizes
+      : [];
+  }, [selectedSubCategory, subCategories]);
 
   useEffect(() => {
     const variants = form.getValues("variants");
@@ -248,7 +249,7 @@ export function ProductForm({
       variants: values.variants.map((variant) => ({
         ...variant,
         price: Math.round(variant.price),
-        ...(isEditMode && 'id' in variant ? { id: (variant as any).id } : {}),
+        ...(isEditMode && "id" in variant ? { id: (variant as any).id } : {}),
         images: variant.images.map((img) => ({
           ...img,
           ...(isEditMode && "id" in img ? { id: (img as any).id } : {}),

@@ -38,6 +38,10 @@ export const GET_PRODUCT_FORM_DATA = gql`
     getMainSubCategories {
       id
       name
+      sizes {
+        id
+        value
+      }
     }
   }
 `;
