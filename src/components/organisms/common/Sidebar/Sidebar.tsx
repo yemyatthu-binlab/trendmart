@@ -61,9 +61,9 @@ export function Sidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  href="#"
+                  href="/admin/orders"
                   className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
-                    isActive("#")
+                    isActive("/admin/orders")
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -93,9 +93,9 @@ export function Sidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  href="#"
+                  href="/admin/customers"
                   className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
-                    isActive("#")
+                    isActive("/admin/customers")
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -176,9 +176,9 @@ export function Sidebar() {
                 Dashboard
               </Link>
               <Link
-                href="#"
+                href="/admin/orders"
                 className={`flex items-center gap-4 px-2.5 ${
-                  isActive("/admin/dashboard")
+                  isActive("/admin/orders")
                     ? "text-foreground font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -198,9 +198,9 @@ export function Sidebar() {
                 Products
               </Link>
               <Link
-                href="#"
+                href="/admin/customers"
                 className={`flex items-center gap-4 px-2.5 ${
-                  isActive("/admin/dashboard")
+                  isActive("/admin/customers")
                     ? "text-foreground font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}

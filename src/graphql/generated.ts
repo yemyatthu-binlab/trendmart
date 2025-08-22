@@ -18,6 +18,19 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export type Address = {
+  __typename?: 'Address';
+  addressLine1: Scalars['String']['output'];
+  addressLine2?: Maybe<Scalars['String']['output']>;
+  city: Scalars['String']['output'];
+  fullName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  isDefault?: Maybe<Scalars['Boolean']['output']>;
+  phoneNumber: Scalars['String']['output'];
+  postalCode: Scalars['String']['output'];
+  state: Scalars['String']['output'];
+};
+
 export type AuthPayload = {
   __typename?: 'AuthPayload';
   token: Scalars['String']['output'];
@@ -67,6 +80,12 @@ export type CreateProductVariantInput = {
   sizeId: Scalars['Int']['input'];
   sku?: InputMaybe<Scalars['String']['input']>;
   stock: Scalars['Int']['input'];
+};
+
+export type CustomerListResponse = {
+  __typename?: 'CustomerListResponse';
+  customers: Array<User>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type Mutation = {
@@ -179,6 +198,65 @@ export type MutationUploadImageArgs = {
   file: Scalars['Upload']['input'];
 };
 
+export type Order = {
+  __typename?: 'Order';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  items: Array<OrderItem>;
+  orderStatus: OrderStatus;
+  orderTotal: Scalars['Float']['output'];
+  payment?: Maybe<Payment>;
+  shippingAddress: Address;
+  updatedAt: Scalars['String']['output'];
+  user: User;
+};
+
+export type OrderItem = {
+  __typename?: 'OrderItem';
+  id: Scalars['ID']['output'];
+  priceAtPurchase: Scalars['Float']['output'];
+  product: Product;
+  productVariant: ProductVariant;
+  quantity: Scalars['Int']['output'];
+};
+
+export type OrderListResponse = {
+  __typename?: 'OrderListResponse';
+  orders: Array<Order>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum OrderStatus {
+  Cancelled = 'CANCELLED',
+  Delivered = 'DELIVERED',
+  PendingPayment = 'PENDING_PAYMENT',
+  Processing = 'PROCESSING',
+  Shipped = 'SHIPPED'
+}
+
+export type Payment = {
+  __typename?: 'Payment';
+  amount: Scalars['Float']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  manualPaymentScreenshotUrl?: Maybe<Scalars['String']['output']>;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  stripePaymentIntentId?: Maybe<Scalars['String']['output']>;
+};
+
+export enum PaymentMethod {
+  ManualUpload = 'MANUAL_UPLOAD',
+  Stripe = 'STRIPE'
+}
+
+export enum PaymentStatus {
+  Completed = 'COMPLETED',
+  Failed = 'FAILED',
+  Pending = 'PENDING',
+  VerificationPending = 'VERIFICATION_PENDING'
+}
+
 export type Product = {
   __typename?: 'Product';
   categories?: Maybe<Array<Category>>;
@@ -223,11 +301,38 @@ export type Query = {
   getCategoriesForManagement: Array<Category>;
   getColors?: Maybe<Array<Color>>;
   getColorsForManagement: Array<Color>;
+  getCustomerById?: Maybe<User>;
+  getCustomers?: Maybe<CustomerListResponse>;
   getMainSubCategories: Array<Category>;
+  getOrderById?: Maybe<Order>;
+  getOrders: OrderListResponse;
   getProductById?: Maybe<Product>;
   getProducts?: Maybe<ProductListResponse>;
   getSizes?: Maybe<Array<Size>>;
   getUnassignedSizesForCategory: Array<Size>;
+};
+
+
+export type QueryGetCustomerByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetCustomersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGetOrderByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetOrdersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<OrderStatus>;
+  take?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -291,11 +396,14 @@ export type UploadedImage = {
 
 export type User = {
   __typename?: 'User';
+  addresses?: Maybe<Array<Address>>;
+  createdAt: Scalars['String']['output'];
   email: Scalars['String']['output'];
   fullName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   phoneNumber: Scalars['String']['output'];
   role: UserRole;
+  updatedAt: Scalars['String']['output'];
 };
 
 export enum UserRole {
@@ -418,6 +526,36 @@ export type GetUnassignedSizesForCategoryQueryVariables = Exact<{
 
 
 export type GetUnassignedSizesForCategoryQuery = { __typename?: 'Query', getUnassignedSizesForCategory: Array<{ __typename?: 'Size', id: string, value: string }> };
+
+export type GetCustomersQueryVariables = Exact<{
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetCustomersQuery = { __typename?: 'Query', getCustomers?: { __typename?: 'CustomerListResponse', totalCount: number, customers: Array<{ __typename?: 'User', id: string, fullName: string, email: string, phoneNumber: string, createdAt: string }> } | null };
+
+export type GetCustomerByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetCustomerByIdQuery = { __typename?: 'Query', getCustomerById?: { __typename?: 'User', id: string, fullName: string, email: string, phoneNumber: string, createdAt: string, updatedAt: string, addresses?: Array<{ __typename?: 'Address', id: string, fullName: string, phoneNumber: string, addressLine1: string, addressLine2?: string | null, city: string, state: string, postalCode: string, isDefault?: boolean | null }> | null } | null };
+
+export type GetOrdersListQueryVariables = Exact<{
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetOrdersListQuery = { __typename?: 'Query', getOrders: { __typename?: 'OrderListResponse', totalCount: number, orders: Array<{ __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, user: { __typename?: 'User', fullName: string }, items: Array<{ __typename?: 'OrderItem', id: string }> }> } };
+
+export type GetOrderByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetOrderByIdQuery = { __typename?: 'Query', getOrderById?: { __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, user: { __typename?: 'User', id: string, fullName: string, email: string }, shippingAddress: { __typename?: 'Address', fullName: string, phoneNumber: string, addressLine1: string, addressLine2?: string | null, city: string, state: string, postalCode: string }, payment?: { __typename?: 'Payment', paymentMethod: PaymentMethod, paymentStatus: PaymentStatus, amount: number } | null, items: Array<{ __typename?: 'OrderItem', id: string, quantity: number, priceAtPurchase: number, product: { __typename?: 'Product', id: string, name: string }, productVariant: { __typename?: 'ProductVariant', id: string, size: { __typename?: 'Size', value: string }, color: { __typename?: 'Color', name: string }, images?: Array<{ __typename?: 'ProductImage', imageUrl: string }> | null } }> } | null };
 
 export type GetProductsListQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']['input']>;
@@ -1044,6 +1182,246 @@ export type GetUnassignedSizesForCategoryQueryHookResult = ReturnType<typeof use
 export type GetUnassignedSizesForCategoryLazyQueryHookResult = ReturnType<typeof useGetUnassignedSizesForCategoryLazyQuery>;
 export type GetUnassignedSizesForCategorySuspenseQueryHookResult = ReturnType<typeof useGetUnassignedSizesForCategorySuspenseQuery>;
 export type GetUnassignedSizesForCategoryQueryResult = Apollo.QueryResult<GetUnassignedSizesForCategoryQuery, GetUnassignedSizesForCategoryQueryVariables>;
+export const GetCustomersDocument = gql`
+    query GetCustomers($skip: Int, $take: Int) {
+  getCustomers(skip: $skip, take: $take) {
+    customers {
+      id
+      fullName
+      email
+      phoneNumber
+      createdAt
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetCustomersQuery__
+ *
+ * To run a query within a React component, call `useGetCustomersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCustomersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCustomersQuery({
+ *   variables: {
+ *      skip: // value for 'skip'
+ *      take: // value for 'take'
+ *   },
+ * });
+ */
+export function useGetCustomersQuery(baseOptions?: Apollo.QueryHookOptions<GetCustomersQuery, GetCustomersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCustomersQuery, GetCustomersQueryVariables>(GetCustomersDocument, options);
+      }
+export function useGetCustomersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCustomersQuery, GetCustomersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCustomersQuery, GetCustomersQueryVariables>(GetCustomersDocument, options);
+        }
+export function useGetCustomersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCustomersQuery, GetCustomersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCustomersQuery, GetCustomersQueryVariables>(GetCustomersDocument, options);
+        }
+export type GetCustomersQueryHookResult = ReturnType<typeof useGetCustomersQuery>;
+export type GetCustomersLazyQueryHookResult = ReturnType<typeof useGetCustomersLazyQuery>;
+export type GetCustomersSuspenseQueryHookResult = ReturnType<typeof useGetCustomersSuspenseQuery>;
+export type GetCustomersQueryResult = Apollo.QueryResult<GetCustomersQuery, GetCustomersQueryVariables>;
+export const GetCustomerByIdDocument = gql`
+    query GetCustomerById($id: ID!) {
+  getCustomerById(id: $id) {
+    id
+    fullName
+    email
+    phoneNumber
+    createdAt
+    updatedAt
+    addresses {
+      id
+      fullName
+      phoneNumber
+      addressLine1
+      addressLine2
+      city
+      state
+      postalCode
+      isDefault
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetCustomerByIdQuery__
+ *
+ * To run a query within a React component, call `useGetCustomerByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCustomerByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCustomerByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetCustomerByIdQuery(baseOptions: Apollo.QueryHookOptions<GetCustomerByIdQuery, GetCustomerByIdQueryVariables> & ({ variables: GetCustomerByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCustomerByIdQuery, GetCustomerByIdQueryVariables>(GetCustomerByIdDocument, options);
+      }
+export function useGetCustomerByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCustomerByIdQuery, GetCustomerByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCustomerByIdQuery, GetCustomerByIdQueryVariables>(GetCustomerByIdDocument, options);
+        }
+export function useGetCustomerByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCustomerByIdQuery, GetCustomerByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCustomerByIdQuery, GetCustomerByIdQueryVariables>(GetCustomerByIdDocument, options);
+        }
+export type GetCustomerByIdQueryHookResult = ReturnType<typeof useGetCustomerByIdQuery>;
+export type GetCustomerByIdLazyQueryHookResult = ReturnType<typeof useGetCustomerByIdLazyQuery>;
+export type GetCustomerByIdSuspenseQueryHookResult = ReturnType<typeof useGetCustomerByIdSuspenseQuery>;
+export type GetCustomerByIdQueryResult = Apollo.QueryResult<GetCustomerByIdQuery, GetCustomerByIdQueryVariables>;
+export const GetOrdersListDocument = gql`
+    query GetOrdersList($skip: Int, $take: Int) {
+  getOrders(skip: $skip, take: $take) {
+    orders {
+      id
+      createdAt
+      orderStatus
+      orderTotal
+      user {
+        fullName
+      }
+      items {
+        id
+      }
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetOrdersListQuery__
+ *
+ * To run a query within a React component, call `useGetOrdersListQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOrdersListQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOrdersListQuery({
+ *   variables: {
+ *      skip: // value for 'skip'
+ *      take: // value for 'take'
+ *   },
+ * });
+ */
+export function useGetOrdersListQuery(baseOptions?: Apollo.QueryHookOptions<GetOrdersListQuery, GetOrdersListQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetOrdersListQuery, GetOrdersListQueryVariables>(GetOrdersListDocument, options);
+      }
+export function useGetOrdersListLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrdersListQuery, GetOrdersListQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetOrdersListQuery, GetOrdersListQueryVariables>(GetOrdersListDocument, options);
+        }
+export function useGetOrdersListSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrdersListQuery, GetOrdersListQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetOrdersListQuery, GetOrdersListQueryVariables>(GetOrdersListDocument, options);
+        }
+export type GetOrdersListQueryHookResult = ReturnType<typeof useGetOrdersListQuery>;
+export type GetOrdersListLazyQueryHookResult = ReturnType<typeof useGetOrdersListLazyQuery>;
+export type GetOrdersListSuspenseQueryHookResult = ReturnType<typeof useGetOrdersListSuspenseQuery>;
+export type GetOrdersListQueryResult = Apollo.QueryResult<GetOrdersListQuery, GetOrdersListQueryVariables>;
+export const GetOrderByIdDocument = gql`
+    query GetOrderById($id: ID!) {
+  getOrderById(id: $id) {
+    id
+    createdAt
+    orderStatus
+    orderTotal
+    user {
+      id
+      fullName
+      email
+    }
+    shippingAddress {
+      fullName
+      phoneNumber
+      addressLine1
+      addressLine2
+      city
+      state
+      postalCode
+    }
+    payment {
+      paymentMethod
+      paymentStatus
+      amount
+    }
+    items {
+      id
+      quantity
+      priceAtPurchase
+      product {
+        id
+        name
+      }
+      productVariant {
+        id
+        size {
+          value
+        }
+        color {
+          name
+        }
+        images {
+          imageUrl
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetOrderByIdQuery__
+ *
+ * To run a query within a React component, call `useGetOrderByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOrderByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOrderByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetOrderByIdQuery(baseOptions: Apollo.QueryHookOptions<GetOrderByIdQuery, GetOrderByIdQueryVariables> & ({ variables: GetOrderByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetOrderByIdQuery, GetOrderByIdQueryVariables>(GetOrderByIdDocument, options);
+      }
+export function useGetOrderByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrderByIdQuery, GetOrderByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetOrderByIdQuery, GetOrderByIdQueryVariables>(GetOrderByIdDocument, options);
+        }
+export function useGetOrderByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrderByIdQuery, GetOrderByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetOrderByIdQuery, GetOrderByIdQueryVariables>(GetOrderByIdDocument, options);
+        }
+export type GetOrderByIdQueryHookResult = ReturnType<typeof useGetOrderByIdQuery>;
+export type GetOrderByIdLazyQueryHookResult = ReturnType<typeof useGetOrderByIdLazyQuery>;
+export type GetOrderByIdSuspenseQueryHookResult = ReturnType<typeof useGetOrderByIdSuspenseQuery>;
+export type GetOrderByIdQueryResult = Apollo.QueryResult<GetOrderByIdQuery, GetOrderByIdQueryVariables>;
 export const GetProductsListDocument = gql`
     query GetProductsList($skip: Int, $take: Int) {
   getProducts(skip: $skip, take: $take) {
