@@ -10,7 +10,7 @@ import { useMemo, useState, useEffect } from "react";
 
 import { productFormSchema, type ProductFormValues } from "@/lib/validator";
 import { CREATE_PRODUCT, UPDATE_PRODUCT } from "@/graphql/mutation/product";
-import { Category, Product } from "@/graphql/generated"; // Assuming 'Product' is in your generated types
+import { Category, Product } from "@/graphql/generated";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ export type InitialProductData = Pick<
     sku: string | null;
     price: number;
     stock: number;
-    size: { id: string };
+    size: { id: string; value: string };
     color: { id: string };
     images: Array<{
       id: string;
@@ -62,7 +62,7 @@ export type InitialProductData = Pick<
 interface ProductFormProps {
   initialData?: InitialProductData | null;
   categories: { id: string; name: string }[];
-  subCategories: { id: string; name: string }[];
+  subCategories: { id: string; name: string; sizes?: any[] }[];
   sizes: { id: string; value: string }[];
   colors: { id: string; name: string; hexCode?: string | null }[];
 }
@@ -71,6 +71,7 @@ export function ProductForm({
   initialData,
   categories,
   subCategories,
+  sizes,
   colors,
 }: ProductFormProps) {
   const router = useRouter();
@@ -82,14 +83,14 @@ export function ProductForm({
     useMutation(UPDATE_PRODUCT);
   const loading = createLoading || updateLoading;
 
-  const [selectedMainCategory, setSelectedMainCategory] = useState<Pick<
-    Category,
-    "id" | "name"
-  > | null>(null);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<Pick<
-    Category,
-    "id" | "name"
-  > | null>(null);
+  const [selectedMainCategory, setSelectedMainCategory] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const transformInitialData = (
     data: InitialProductData
@@ -143,31 +144,29 @@ export function ProductForm({
     name: "variants",
   });
 
+  // Set initial categories when in edit mode
   useEffect(() => {
-    if (isEditMode && initialData) {
-      const mainCat = categories.find((c) =>
-        initialData?.categories?.some((ic) => ic.name === c.name)
-      );
+    console.log("initialData", initialData);
+    if (isEditMode && initialData && initialData.categories?.length) {
+      // Find main category (assuming it's the first one)
+      const mainCategoryId = initialData.categories[0].id;
+      const mainCat = categories.find((c) => c.id === mainCategoryId);
+      console.log("mainCat", mainCat);
+
       if (mainCat) {
         setSelectedMainCategory(mainCat);
-        const subCatRaw = subCategories.find((sc) =>
-          initialData?.categories?.some(
-            (ic) => ic.id === sc.id && ic.name !== mainCat.name
-          )
-        );
-        if (subCatRaw) {
-          // Add displayName to match the structure of availableSubCategories
-          const subCat = {
-            ...subCatRaw,
-            displayName: subCatRaw.name.replace(mainCat.name, "").trim(),
-          };
-          setSelectedSubCategory(subCat);
+
+        // Find sub-category if exists (assuming it's the second one)
+        if (initialData.categories.length > 1) {
+          const subCategoryId = initialData.categories[1].id;
+          const subCat = subCategories.find((sc) => sc.id === subCategoryId);
+          if (subCat) {
+            setSelectedSubCategory(subCat);
+          }
         }
       }
-    } else if (categories.length > 0 && !selectedMainCategory) {
-      handleMainCategoryChange(categories[0].id);
     }
-  }, [categories, selectedMainCategory]);
+  }, [isEditMode, initialData, categories, subCategories]);
 
   const availableSubCategories = useMemo(() => {
     if (!selectedMainCategory) return [];
@@ -179,85 +178,58 @@ export function ProductForm({
       }));
   }, [selectedMainCategory, subCategories]);
 
-  useEffect(() => {
-    if (availableSubCategories.length > 0 && !selectedSubCategory) {
-      handleSubCategoryChange(availableSubCategories[0].id);
-    }
-  }, [availableSubCategories, selectedSubCategory]);
-
   const availableSizes = useMemo(() => {
-    if (!selectedSubCategory) return [];
-    const fullSubCategoryData = subCategories.find(
-      (sc) => sc.id === selectedSubCategory.id
-    );
+    if (!selectedSubCategory) return sizes;
 
-    // If sizes property exists, return it; otherwise, return an empty array
-    return (fullSubCategoryData && 'sizes' in fullSubCategoryData && Array.isArray((fullSubCategoryData as any).sizes))
-      ? (fullSubCategoryData as any).sizes
-      : [];
-  }, [selectedSubCategory, subCategories]);
-
-  useEffect(() => {
-    const variants = form.getValues("variants");
-    if (
-      variants.length === 1 &&
-      variants[0].sizeId === 0 &&
-      variants[0].colorId === 0
-    ) {
-      if (availableSizes.length > 0) {
-        form.setValue("variants.0.sizeId", Number(availableSizes[0].id));
-      }
-      if (colors.length > 0) {
-        form.setValue("variants.0.colorId", Number(colors[0].id));
-      }
+    // Check if the subCategory has sizes property
+    if (selectedSubCategory.sizes && Array.isArray(selectedSubCategory.sizes)) {
+      return selectedSubCategory.sizes;
     }
-  }, [availableSizes, colors, form]);
+
+    // Fallback to the sizes prop
+    return sizes;
+  }, [selectedSubCategory, sizes]);
 
   const handleMainCategoryChange = (id: string) => {
+    if (!id) return;
     const category = categories.find((c) => c.id === id) || null;
     setSelectedMainCategory(category);
     setSelectedSubCategory(null);
-    form.resetField("categoryIds");
-    form.setValue("categoryIds", category ? [Number(category.id)] : []);
+
+    const currentCategoryIds = form.getValues("categoryIds");
+    const newCategoryIds = category ? [Number(category.id)] : [];
+
+    form.setValue("categoryIds", newCategoryIds);
   };
 
   const handleSubCategoryChange = (id: string) => {
+    if (!id) return;
     const subCategory = availableSubCategories.find((c) => c.id === id) || null;
     setSelectedSubCategory(subCategory);
+
     if (selectedMainCategory && subCategory) {
       form.setValue("categoryIds", [
         Number(selectedMainCategory.id),
         Number(subCategory.id),
       ]);
     }
-    const currentVariants = form.getValues("variants");
-    if (currentVariants.some((v) => v.sizeId > 0)) {
-      toast.info(
-        "Sub-category changed. Please re-select the size for each variant."
-      );
-    }
-    const updatedVariants = currentVariants.map((variant) => ({
-      ...variant,
-      sizeId: 0,
-    }));
-    form.setValue("variants", updatedVariants, { shouldValidate: true });
   };
 
   const onSubmit = async (values: ProductFormValues) => {
-    const inputForGraphQL = {
-      ...values,
-      variants: values.variants.map((variant) => ({
-        ...variant,
-        price: Math.round(variant.price),
-        ...(isEditMode && "id" in variant ? { id: (variant as any).id } : {}),
-        images: variant.images.map((img) => ({
-          ...img,
-          ...(isEditMode && "id" in img ? { id: (img as any).id } : {}),
-        })),
-      })),
-    };
-
     try {
+      const inputForGraphQL = {
+        ...values,
+        variants: values.variants.map((variant) => ({
+          ...variant,
+          price: Math.round(variant.price),
+          ...(isEditMode && variant.id ? { id: variant.id } : {}),
+          images: variant.images.map((img) => ({
+            ...img,
+            ...(isEditMode && img.id ? { id: img.id } : {}),
+          })),
+        })),
+      };
+
       if (isEditMode) {
         await updateProduct({
           variables: { id: initialData.id, input: inputForGraphQL },
@@ -332,7 +304,7 @@ export function ProductForm({
                         <FormLabel>Main Category</FormLabel>
                         <Select
                           onValueChange={handleMainCategoryChange}
-                          value={selectedMainCategory?.id}
+                          value={selectedMainCategory?.id || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -353,7 +325,7 @@ export function ProductForm({
                         <Select
                           onValueChange={handleSubCategoryChange}
                           disabled={!selectedMainCategory}
-                          value={selectedSubCategory?.id}
+                          value={selectedSubCategory?.id || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -383,6 +355,7 @@ export function ProductForm({
                       sizes={availableSizes}
                       colors={colors}
                       onRemove={() => removeVariant(index)}
+                      isEditMode={isEditMode}
                     />
                   ))}
                 </div>

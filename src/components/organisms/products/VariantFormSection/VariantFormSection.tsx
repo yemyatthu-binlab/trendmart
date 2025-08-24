@@ -35,6 +35,7 @@ interface VariantFormSectionProps {
   sizes: { id: string; value: string }[];
   colors: { id: string; name: string; hexCode?: string | null }[];
   onRemove: () => void;
+  isEditMode?: boolean;
 }
 
 export function VariantFormSection({
@@ -66,7 +67,8 @@ export function VariantFormSection({
     const selectedSize = sizes.find((s) => Number(s.id) == variant.sizeId);
     const selectedColor = colors.find((c) => Number(c.id) === variant.colorId);
 
-    const sizeDisplay = selectedSize?.value.split("_")[1] || "";
+    const sizeDisplay =
+      selectedSize?.value.split("_")[1] || selectedSize?.value || "";
     const colorDisplay = selectedColor?.name || "";
 
     if (sizeDisplay && colorDisplay) {
