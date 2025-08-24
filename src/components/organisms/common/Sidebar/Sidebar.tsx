@@ -2,7 +2,6 @@
 import Link from "next/link";
 import {
   Home,
-  LineChart,
   Package,
   Package2,
   Settings,

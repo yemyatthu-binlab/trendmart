@@ -72,7 +72,7 @@ export function AddColorModal({
   useEffect(() => {
     if (initialHexCode) {
       form.setValue("hexCode", initialHexCode);
-      form.setFocus("name"); 
+      form.setFocus("name");
     }
   }, [initialHexCode, form]);
 
@@ -121,7 +121,11 @@ export function AddColorModal({
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="button"
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={loading}
+            >
               {loading ? "Adding..." : "Add Color"}
             </Button>
           </form>

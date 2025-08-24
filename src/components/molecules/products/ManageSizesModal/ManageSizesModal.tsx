@@ -74,6 +74,13 @@ export function ManageSizesModal({
     }
   }, [subCategory, open]);
 
+  // useEffect(() => {
+  //   if (!open) {
+  //     setSelectedSizeIds(new Set());
+  //     form.reset();
+  //   }
+  // }, [open]);
+
   const { data: unassignedData, loading: unassignedLoading } = useQuery(
     GET_UNASSIGNED_SIZES_FOR_CATEGORY,
     {
@@ -100,19 +107,38 @@ export function ManageSizesModal({
 
   const [assignSizes] = useAssignSizesToSubCategoryMutation({
     // CHANGED: Update internal state on completion.
-    onCompleted: (_, { variables }) => {
-      const assignedIds = new Set(variables.sizeIds);
+    onCompleted: (data, { variables }) => {
+      if (!data?.assignSizesToSubCategory) return;
+
+      const assignedIds = new Set(variables.sizeIds.map(String)); // Ensure IDs are strings for comparison
       const newlyAssignedSizes =
         unassignedData?.getUnassignedSizesForCategory.filter((size: Size) =>
-          assignedIds.has(parseInt(size.id))
+          assignedIds.has(size.id)
         ) || [];
 
-      setInternalSizes((prevSizes) =>
-        [...prevSizes, ...newlyAssignedSizes].sort((a, b) =>
-          a.value.localeCompare(b.value)
-        )
-      );
+      if (newlyAssignedSizes.length > 0) {
+        setInternalSizes((prevSizes: Size[]) => {
+          // Create a Set of existing size IDs for efficient lookup.
+          const existingIds: Set<string> = new Set(
+            prevSizes.map((s: Size) => s.id)
+          );
 
+          // Filter out any newly assigned sizes that are ALREADY in the state.
+          const trulyNewSizes: Size[] = newlyAssignedSizes.filter(
+            (size: Size) => !existingIds.has(size.id)
+          );
+
+          // If there are no genuinely new sizes to add, return the previous state.
+          if (trulyNewSizes.length === 0) {
+            return prevSizes;
+          }
+
+          // Combine the previous sizes with only the truly new ones and sort.
+          return [...prevSizes, ...trulyNewSizes].sort((a: Size, b: Size) =>
+            a.value.localeCompare(b.value)
+          );
+        });
+      }
       toast.success("Sizes assigned successfully!");
       setSelectedSizeIds(new Set());
     },
@@ -133,7 +159,6 @@ export function ManageSizesModal({
         [...prevSizes, newSize].sort((a, b) => a.value.localeCompare(b.value))
       );
 
-      // Then, call the assign mutation to link it in the backend.
       assignSizes({
         variables: {
           subCategoryId: subCategory!.id,
@@ -176,6 +201,21 @@ export function ManageSizesModal({
   };
 
   const handleCreateNewSize = (values: z.infer<typeof newSizeSchema>) => {
+    const existsInAssociated = internalSizes.some(
+      (size) => size.value.toLowerCase() === values.value.toLowerCase()
+    );
+
+    // Check for duplicates in unassigned sizes
+    const existsInUnassigned =
+      unassignedData?.getUnassignedSizesForCategory?.some(
+        (size: Size) => size.value.toLowerCase() === values.value.toLowerCase()
+      );
+
+    if (existsInAssociated || existsInUnassigned) {
+      toast.error(`Size "${values.value}" already exists`);
+      return;
+    }
+
     createSize({ variables: { value: values.value } });
   };
 
