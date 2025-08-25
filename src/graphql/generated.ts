@@ -268,6 +268,11 @@ export type Product = {
   variants?: Maybe<Array<Maybe<ProductVariant>>>;
 };
 
+export type ProductFilterInput = {
+  categoryIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ProductImage = {
   __typename?: 'ProductImage';
   altText?: Maybe<Scalars['String']['output']>;
@@ -282,6 +287,11 @@ export type ProductListResponse = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type ProductSortInput = {
+  field?: InputMaybe<Scalars['String']['input']>;
+  order?: InputMaybe<SortOrder>;
+};
+
 export type ProductVariant = {
   __typename?: 'ProductVariant';
   color: Color;
@@ -292,6 +302,12 @@ export type ProductVariant = {
   size: Size;
   sku?: Maybe<Scalars['String']['output']>;
   stock: Scalars['Int']['output'];
+};
+
+export type PublicProductListResponse = {
+  __typename?: 'PublicProductListResponse';
+  products: Array<Product>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type Query = {
@@ -310,6 +326,7 @@ export type Query = {
   getProducts?: Maybe<ProductListResponse>;
   getSizes?: Maybe<Array<Size>>;
   getUnassignedSizesForCategory: Array<Size>;
+  listPublicProducts?: Maybe<PublicProductListResponse>;
 };
 
 
@@ -351,11 +368,24 @@ export type QueryGetUnassignedSizesForCategoryArgs = {
   subCategoryId: Scalars['ID']['input'];
 };
 
+
+export type QueryListPublicProductsArgs = {
+  filter?: InputMaybe<ProductFilterInput>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  sort?: InputMaybe<ProductSortInput>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type Size = {
   __typename?: 'Size';
   id: Scalars['ID']['output'];
   value: Scalars['String']['output'];
 };
+
+export enum SortOrder {
+  Asc = 'asc',
+  Desc = 'desc'
+}
 
 export type SuccessResponse = {
   __typename?: 'SuccessResponse';
@@ -581,6 +611,26 @@ export type GetColorsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetColorsQuery = { __typename?: 'Query', getColors?: Array<{ __typename?: 'Color', id: string, name: string, hexCode?: string | null }> | null };
+
+export type ListPublicProductsQueryVariables = Exact<{
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+  filter?: InputMaybe<ProductFilterInput>;
+  sort?: InputMaybe<ProductSortInput>;
+}>;
+
+
+export type ListPublicProductsQuery = { __typename?: 'Query', listPublicProducts?: { __typename?: 'PublicProductListResponse', totalCount: number, products: Array<{ __typename?: 'Product', id: string, name: string, description?: string | null, createdAt: string, categories?: Array<{ __typename?: 'Category', id: string, name: string }> | null, variants?: Array<{ __typename?: 'ProductVariant', id: string, price: number, stock: number, size: { __typename?: 'Size', id: string, value: string }, color: { __typename?: 'Color', id: string, name: string, hexCode?: string | null }, images?: Array<{ __typename?: 'ProductImage', id: string, imageUrl: string, altText?: string | null, isPrimary: boolean }> | null } | null> | null }> } | null };
+
+export type GetMainSubCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetMainSubCategoriesQuery = { __typename?: 'Query', getMainSubCategories: Array<{ __typename?: 'Category', id: string, name: string, sizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null, children?: Array<{ __typename?: 'Category', id: string, name: string }> | null }> };
+
+export type GetCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetCategoriesQuery = { __typename?: 'Query', getCategories?: Array<{ __typename?: 'Category', id: string, name: string, sizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null, children?: Array<{ __typename?: 'Category', id: string, name: string }> | null }> | null };
 
 
 export const CreateCategoryDocument = gql`
@@ -1640,3 +1690,172 @@ export type GetColorsQueryHookResult = ReturnType<typeof useGetColorsQuery>;
 export type GetColorsLazyQueryHookResult = ReturnType<typeof useGetColorsLazyQuery>;
 export type GetColorsSuspenseQueryHookResult = ReturnType<typeof useGetColorsSuspenseQuery>;
 export type GetColorsQueryResult = Apollo.QueryResult<GetColorsQuery, GetColorsQueryVariables>;
+export const ListPublicProductsDocument = gql`
+    query ListPublicProducts($skip: Int, $take: Int, $filter: ProductFilterInput, $sort: ProductSortInput) {
+  listPublicProducts(skip: $skip, take: $take, filter: $filter, sort: $sort) {
+    products {
+      id
+      name
+      description
+      createdAt
+      categories {
+        id
+        name
+      }
+      variants {
+        id
+        price
+        stock
+        size {
+          id
+          value
+        }
+        color {
+          id
+          name
+          hexCode
+        }
+        images {
+          id
+          imageUrl
+          altText
+          isPrimary
+        }
+      }
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useListPublicProductsQuery__
+ *
+ * To run a query within a React component, call `useListPublicProductsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListPublicProductsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListPublicProductsQuery({
+ *   variables: {
+ *      skip: // value for 'skip'
+ *      take: // value for 'take'
+ *      filter: // value for 'filter'
+ *      sort: // value for 'sort'
+ *   },
+ * });
+ */
+export function useListPublicProductsQuery(baseOptions?: Apollo.QueryHookOptions<ListPublicProductsQuery, ListPublicProductsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ListPublicProductsQuery, ListPublicProductsQueryVariables>(ListPublicProductsDocument, options);
+      }
+export function useListPublicProductsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListPublicProductsQuery, ListPublicProductsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ListPublicProductsQuery, ListPublicProductsQueryVariables>(ListPublicProductsDocument, options);
+        }
+export function useListPublicProductsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ListPublicProductsQuery, ListPublicProductsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListPublicProductsQuery, ListPublicProductsQueryVariables>(ListPublicProductsDocument, options);
+        }
+export type ListPublicProductsQueryHookResult = ReturnType<typeof useListPublicProductsQuery>;
+export type ListPublicProductsLazyQueryHookResult = ReturnType<typeof useListPublicProductsLazyQuery>;
+export type ListPublicProductsSuspenseQueryHookResult = ReturnType<typeof useListPublicProductsSuspenseQuery>;
+export type ListPublicProductsQueryResult = Apollo.QueryResult<ListPublicProductsQuery, ListPublicProductsQueryVariables>;
+export const GetMainSubCategoriesDocument = gql`
+    query GetMainSubCategories {
+  getMainSubCategories {
+    id
+    name
+    sizes {
+      id
+      value
+    }
+    children {
+      id
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetMainSubCategoriesQuery__
+ *
+ * To run a query within a React component, call `useGetMainSubCategoriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMainSubCategoriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMainSubCategoriesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMainSubCategoriesQuery(baseOptions?: Apollo.QueryHookOptions<GetMainSubCategoriesQuery, GetMainSubCategoriesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMainSubCategoriesQuery, GetMainSubCategoriesQueryVariables>(GetMainSubCategoriesDocument, options);
+      }
+export function useGetMainSubCategoriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMainSubCategoriesQuery, GetMainSubCategoriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMainSubCategoriesQuery, GetMainSubCategoriesQueryVariables>(GetMainSubCategoriesDocument, options);
+        }
+export function useGetMainSubCategoriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMainSubCategoriesQuery, GetMainSubCategoriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMainSubCategoriesQuery, GetMainSubCategoriesQueryVariables>(GetMainSubCategoriesDocument, options);
+        }
+export type GetMainSubCategoriesQueryHookResult = ReturnType<typeof useGetMainSubCategoriesQuery>;
+export type GetMainSubCategoriesLazyQueryHookResult = ReturnType<typeof useGetMainSubCategoriesLazyQuery>;
+export type GetMainSubCategoriesSuspenseQueryHookResult = ReturnType<typeof useGetMainSubCategoriesSuspenseQuery>;
+export type GetMainSubCategoriesQueryResult = Apollo.QueryResult<GetMainSubCategoriesQuery, GetMainSubCategoriesQueryVariables>;
+export const GetCategoriesDocument = gql`
+    query GetCategories {
+  getCategories {
+    id
+    name
+    sizes {
+      id
+      value
+    }
+    children {
+      id
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetCategoriesQuery__
+ *
+ * To run a query within a React component, call `useGetCategoriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCategoriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCategoriesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetCategoriesQuery(baseOptions?: Apollo.QueryHookOptions<GetCategoriesQuery, GetCategoriesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCategoriesQuery, GetCategoriesQueryVariables>(GetCategoriesDocument, options);
+      }
+export function useGetCategoriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCategoriesQuery, GetCategoriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCategoriesQuery, GetCategoriesQueryVariables>(GetCategoriesDocument, options);
+        }
+export function useGetCategoriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCategoriesQuery, GetCategoriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCategoriesQuery, GetCategoriesQueryVariables>(GetCategoriesDocument, options);
+        }
+export type GetCategoriesQueryHookResult = ReturnType<typeof useGetCategoriesQuery>;
+export type GetCategoriesLazyQueryHookResult = ReturnType<typeof useGetCategoriesLazyQuery>;
+export type GetCategoriesSuspenseQueryHookResult = ReturnType<typeof useGetCategoriesSuspenseQuery>;
+export type GetCategoriesQueryResult = Apollo.QueryResult<GetCategoriesQuery, GetCategoriesQueryVariables>;

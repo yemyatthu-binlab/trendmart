@@ -10,7 +10,7 @@ import { useMemo, useState, useEffect } from "react";
 
 import { productFormSchema, type ProductFormValues } from "@/lib/validator";
 import { CREATE_PRODUCT, UPDATE_PRODUCT } from "@/graphql/mutation/product";
-import { Category, Product } from "@/graphql/generated";
+import { Product } from "@/graphql/generated";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +90,10 @@ export function ProductForm({
   const [selectedSubCategory, setSelectedSubCategory] = useState<{
     id: string;
     name: string;
+    sizes?: { id: string; value: string }[];
   } | null>(null);
+
+  const isSizeDisabled = !selectedMainCategory || !selectedSubCategory;
 
   const transformInitialData = (
     data: InitialProductData
@@ -222,10 +225,10 @@ export function ProductForm({
         variants: values.variants.map((variant) => ({
           ...variant,
           price: Math.round(variant.price),
-          ...(isEditMode && variant.id ? { id: variant.id } : {}),
+          ...(isEditMode && "id" in variant ? { id: (variant as any).id } : {}),
           images: variant.images.map((img) => ({
             ...img,
-            ...(isEditMode && img.id ? { id: img.id } : {}),
+            ...(isEditMode && "id" in img ? { id: (img as any).id } : {}),
           })),
         })),
       };
@@ -356,6 +359,7 @@ export function ProductForm({
                       colors={colors}
                       onRemove={() => removeVariant(index)}
                       isEditMode={isEditMode}
+                      isSizeDisabled={isSizeDisabled}
                     />
                   ))}
                 </div>

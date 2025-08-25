@@ -90,3 +90,80 @@ export const GET_COLORS = gql`
     }
   }
 `;
+
+export const LIST_PUBLIC_PRODUCTS = gql`
+  query ListPublicProducts(
+    $skip: Int
+    $take: Int
+    $filter: ProductFilterInput
+    $sort: ProductSortInput
+  ) {
+    listPublicProducts(skip: $skip, take: $take, filter: $filter, sort: $sort) {
+      products {
+        id
+        name
+        description
+        createdAt
+        categories {
+          id
+          name
+        }
+        variants {
+          id
+          price
+          stock
+          size {
+            id
+            value
+          }
+          color {
+            id
+            name
+            hexCode
+          }
+          images {
+            id
+            imageUrl
+            altText
+            isPrimary
+          }
+        }
+      }
+      totalCount
+    }
+  }
+`;
+
+export const GET_MAIN_SUB_CATEGORIES = gql`
+  query GetMainSubCategories {
+    getMainSubCategories {
+      id
+      name
+      sizes {
+        id
+        value
+      }
+      children {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const GET_CATEGORIES = gql`
+  query GetCategories {
+    getCategories {
+      id
+      name
+      sizes {
+        id
+        value
+      }
+      children {
+        id
+        name
+      }
+    }
+  }
+`;

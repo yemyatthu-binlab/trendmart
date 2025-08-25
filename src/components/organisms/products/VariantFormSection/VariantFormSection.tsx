@@ -36,6 +36,7 @@ interface VariantFormSectionProps {
   colors: { id: string; name: string; hexCode?: string | null }[];
   onRemove: () => void;
   isEditMode?: boolean;
+  isSizeDisabled?: boolean;
 }
 
 export function VariantFormSection({
@@ -44,6 +45,7 @@ export function VariantFormSection({
   sizes,
   colors,
   onRemove,
+  isSizeDisabled,
 }: VariantFormSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [initialHex, setInitialHex] = useState<string | undefined>(undefined);
@@ -139,10 +141,11 @@ export function VariantFormSection({
                   <FormLabel>Size</FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(Number(value))}
-                    value={field.value.toString()}
+                    value={field.value ? String(field.value) : undefined}
+                    disabled={isSizeDisabled}
                   >
                     <FormControl>
-                      <SelectTrigger className="min-w-[60px]">
+                      <SelectTrigger className="min-w-[70px]">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                     </FormControl>

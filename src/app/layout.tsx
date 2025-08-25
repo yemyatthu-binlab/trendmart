@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={montserrat.variable}>
-      <body className="font-sans antialiased flex min-h-screen bg-gray-100">
+      <body className="font-sans antialiased flex min-h-screen bg-white">
         <ApolloProvider>{children}</ApolloProvider>
       </body>
     </html>
