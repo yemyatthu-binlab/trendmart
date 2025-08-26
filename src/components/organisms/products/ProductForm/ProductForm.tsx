@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client";
-import { PlusCircle } from "lucide-react";
+import { ClipboardPaste, PlusCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { useMemo, useState, useEffect } from "react";
 
@@ -67,6 +67,8 @@ interface ProductFormProps {
   colors: { id: string; name: string; hexCode?: string | null }[];
 }
 
+type VariantData = ProductFormValues["variants"][0];
+
 export function ProductForm({
   initialData,
   categories,
@@ -76,6 +78,7 @@ export function ProductForm({
 }: ProductFormProps) {
   const router = useRouter();
   const isEditMode = !!initialData;
+  const [copiedVariant, setCopiedVariant] = useState<VariantData | null>(null);
 
   const [createProduct, { loading: createLoading }] =
     useMutation(CREATE_PRODUCT);
@@ -137,6 +140,32 @@ export function ProductForm({
           ],
         },
   });
+
+  const handleCopyVariant = (index: number) => {
+    const variantToCopy = form.getValues(`variants.${index}`);
+    const { id, ...variantData } = variantToCopy as any;
+    const sanitizedImages = variantData.images.map((img: any) => {
+      const { id, ...imageData } = img;
+      return imageData;
+    });
+    const sanitizedVariant = {
+      ...variantData,
+      images: sanitizedImages,
+      sku: "",
+    };
+
+    setCopiedVariant(sanitizedVariant);
+    toast.success("Variant copied!");
+  };
+
+  const handlePasteVariant = () => {
+    if (copiedVariant) {
+      appendVariant(copiedVariant);
+      toast.success("Variant pasted!");
+    } else {
+      toast.info("Nothing to paste. Copy a variant first.");
+    }
+  };
 
   const {
     fields: variantFields,
@@ -358,6 +387,7 @@ export function ProductForm({
                       sizes={availableSizes}
                       colors={colors}
                       onRemove={() => removeVariant(index)}
+                      onCopy={() => handleCopyVariant(index)}
                       isEditMode={isEditMode}
                       isSizeDisabled={isSizeDisabled}
                     />
@@ -374,31 +404,46 @@ export function ProductForm({
                     </FormItem>
                   )}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-dashed h-[55px]"
-                  onClick={() => {
-                    const defaultSizeId =
-                      availableSizes.length > 0
-                        ? Number(availableSizes[0].id)
-                        : 0;
-                    const defaultColorId =
-                      colors.length > 0 ? Number(colors[0].id) : 0;
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 border-dashed h-[55px]"
+                    onClick={() => {
+                      const defaultSizeId =
+                        availableSizes.length > 0
+                          ? Number(availableSizes[0].id)
+                          : 0;
+                      const defaultColorId =
+                        colors.length > 0 ? Number(colors[0].id) : 0;
 
-                    appendVariant({
-                      sizeId: defaultSizeId,
-                      colorId: defaultColorId,
-                      price: 0,
-                      stock: 0,
-                      sku: "",
-                      images: [{ imageUrl: "", altText: "", isPrimary: true }],
-                    });
-                  }}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Another Variant
-                </Button>
+                      appendVariant({
+                        sizeId: defaultSizeId,
+                        colorId: defaultColorId,
+                        price: 0,
+                        stock: 0,
+                        sku: "",
+                        images: [
+                          { imageUrl: "", altText: "", isPrimary: true },
+                        ],
+                      });
+                    }}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Another Variant
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-[55px] w-[55px] flex-shrink-0"
+                    onClick={handlePasteVariant}
+                    disabled={!copiedVariant}
+                    title="Paste Variant"
+                  >
+                    <ClipboardPaste className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             </div>
             <div className="flex justify-end pt-4">

@@ -100,8 +100,7 @@ export default function ProductDetailPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle>
-                        {variant?.color.name} -{" "}
-                        {variant?.size.value.split("_")[1]}
+                        {variant?.color.name} - {variant?.size.value}
                       </CardTitle>
                       <CardDescription>SKU: {variant?.sku}</CardDescription>
                     </div>
@@ -137,11 +136,11 @@ export default function ProductDetailPage() {
                     <div className="text-2xl font-bold">
                       {variant?.price} MMK
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
                       <strong>Color:</strong>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2">
                         <span
-                          className="h-6 w-6 rounded-full border"
+                          className="h-4 w-4 rounded-full border"
                           style={{
                             backgroundColor:
                               variant?.color.hexCode || "transparent",
@@ -150,8 +149,10 @@ export default function ProductDetailPage() {
                         <span>{variant?.color.name}</span>
                       </div>
                     </div>
+
                     <div>
-                      <strong>Size:</strong> {variant?.size.value.split("_")[1]}
+                      <strong>Size: </strong>
+                      {variant?.size.value}
                     </div>
                   </div>
                 </CardContent>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFieldArray, useWatch, type UseFormReturn } from "react-hook-form";
-import { Trash2, Pipette, PlusCircle } from "lucide-react";
+import { Trash2, Pipette, PlusCircle, ClipboardCopy } from "lucide-react";
 import { toast } from "sonner";
 
 import { ProductFormValues } from "@/lib/validator";
@@ -35,6 +35,7 @@ interface VariantFormSectionProps {
   sizes: { id: string; value: string }[];
   colors: { id: string; name: string; hexCode?: string | null }[];
   onRemove: () => void;
+  onCopy: () => void;
   isEditMode?: boolean;
   isSizeDisabled?: boolean;
 }
@@ -45,6 +46,7 @@ export function VariantFormSection({
   sizes,
   colors,
   onRemove,
+  onCopy,
   isSizeDisabled,
 }: VariantFormSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -120,16 +122,29 @@ export function VariantFormSection({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between -mt-1">
           <CardTitle className="text-md">{variantTitle}</CardTitle>
-          {variantIndex > 0 && (
+          <div className="flex items-center">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={onRemove}
+              onClick={onCopy}
+              title="Copy Variant"
+              className="bg-gray-100 rounded-full"
             >
-              <Trash2 className="h-4 w-4 text-destructive" />
+              <ClipboardCopy className="h-4 w-4" />
             </Button>
-          )}
+            {variantIndex > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="bg-gray-100 rounded-full ml-3"
+                onClick={onRemove}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -285,9 +300,10 @@ export function VariantFormSection({
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="bg-gray-100"
                       onClick={() => removeImage(index)}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
