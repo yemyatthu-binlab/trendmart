@@ -1,20 +1,44 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { apolloClient } from "@/lib/apolloClient";
+import { User } from "@/graphql/generated";
 
-interface AuthState {
-  token: string | null;
-  setToken: (token: string | null) => void;
-}
+type AuthState = {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean; // <-- Add this
+  login: (token: string, user: User) => void;
+  logout: () => void;
+  setUser: (user: User | null) => void;
+};
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      token: null,
-      setToken: (token) => set({ token }),
-    }),
-    {
-      name: "auth-storage",
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
-);
+const setCustomerCookie = (token: string) => {
+  document.cookie = `customer-auth-token=${token}; path=/; max-age=${
+    60 * 60 * 24 * 7
+  }; secure; samesite=strict`;
+};
+
+const clearAuthCredentials = () => {
+  localStorage.removeItem("authToken");
+  document.cookie =
+    "customer-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  isLoading: true, // <-- Start as true, since we need to verify auth on load
+  login: (token, user) => {
+    localStorage.setItem("authToken", token);
+    setCustomerCookie(token);
+    set({ user, isAuthenticated: true, isLoading: false });
+  },
+  logout: () => {
+    clearAuthCredentials();
+    apolloClient.resetStore();
+    set({ user: null, isAuthenticated: false, isLoading: false });
+  },
+  setUser: (user) => {
+    // This will be our main function for initialization
+    set({ user, isAuthenticated: !!user, isLoading: false });
+  },
+}));

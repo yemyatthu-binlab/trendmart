@@ -31,7 +31,6 @@ export const GET_CUSTOMER_BY_ID_QUERY = gql`
         addressLine1
         addressLine2
         city
-        state
         postalCode
         isDefault
       }

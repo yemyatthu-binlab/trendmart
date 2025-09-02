@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client";
-import { ClipboardPaste, PlusCircle } from "lucide-react";
+import { ClipboardPaste, PlusCircle, Sparkles } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { useMemo, useState, useEffect } from "react";
 
@@ -37,7 +37,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import dynamic from "next/dynamic";
 import { VariantFormSection } from "../VariantFormSection/VariantFormSection";
+import { exampleText, productTables } from "@/lib/mock-data";
+
+const RichTextEditor = dynamic(
+  () =>
+    import(
+      "@/components/molecules/products/RichTextEditor/RichTextEditor"
+    ).then((mod) => mod.RichTextEditor),
+  { ssr: false, loading: () => <p>Loading editor...</p> }
+);
 
 export type InitialProductData = Pick<
   Product,
@@ -319,12 +329,39 @@ export function ProductForm({
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description</FormLabel>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Description</FormLabel>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => {
+                                let key = "default";
+                                const subName =
+                                  selectedSubCategory?.name?.toLowerCase();
+
+                                if (subName?.includes("hoodie")) key = "hoodie";
+                                else if (subName?.includes("pant"))
+                                  key = "pant";
+                                else if (subName?.includes("shirt"))
+                                  key = "shirt";
+                                else if (subName?.includes("shoe"))
+                                  key = "shoes";
+
+                                form.setValue(
+                                  "description",
+                                  exampleText + productTables[key]
+                                );
+                              }}
+                              title="Fill with example"
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </div>
                           <FormControl>
-                            <Textarea
-                              placeholder="Describe the product..."
-                              {...field}
-                              className="min-h-[175px]"
+                            <RichTextEditor
+                              value={field.value!}
+                              onChange={field.onChange}
                             />
                           </FormControl>
                           <FormMessage />

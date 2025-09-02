@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
+import "@/styles/tiptap.css";
 import { ApolloProvider } from "@/components/atoms/common/ApolloProvider/ApolloProvider";
+import { AppInitializer } from "@/components/atoms/common/AppInitializer/AppInitializer";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -21,8 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={montserrat.variable}>
-      <body className="font-sans antialiased flex min-h-screen bg-white">
-        <ApolloProvider>{children}</ApolloProvider>
+      <body className="font-sans antialiased  bg-gray-100">
+        <ApolloProvider>
+          <AppInitializer />
+          {children}
+        </ApolloProvider>
       </body>
     </html>
   );

@@ -167,7 +167,7 @@ export default function CustomerDetailPage() {
                   </p>
                 )}
                 <p className="text-sm text-muted-foreground">
-                  {address.city}, {address.state} {address.postalCode}
+                  {address.city}, {address.postalCode}
                 </p>
                 <Separator className="my-2" />
                 <div className="flex items-center gap-3 text-sm">

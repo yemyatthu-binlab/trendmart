@@ -21,7 +21,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   // Find the variant with the lowest price to display
   const displayVariant = product.variants?.reduce((lowest, current) => {
-    return current.price < lowest.price ? current : lowest;
+    return (current?.price ?? Infinity) < (lowest?.price ?? Infinity) ? current : lowest;
   }, product.variants[0]);
 
   const primaryImage = displayVariant?.images?.[0]?.imageUrl;
@@ -47,7 +47,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col items-start gap-2 p-4">
-          <Badge variant="outline">{product.categories[0]?.name}</Badge>
+          <Badge variant="outline">{product.categories && product.categories[0]?.name}</Badge>
           <h3 className="font-semibold text-lg leading-tight">
             {product.name}
           </h3>

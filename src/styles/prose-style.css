@@ -1,0 +1,74 @@
+/* styles/prose-styles.css */
+
+/*
+  This wrapper makes tables horizontally scrollable if they are too wide
+  for the container, preventing them from breaking the page layout.
+*/
+.prose-wrapper {
+  overflow-x: auto;
+}
+
+/*
+  Override default Tailwind prose styles for a consistent look.
+  We target elements inside .prose, which is used on the customer-facing page.
+*/
+
+/* === Table Styles === */
+
+.prose table {
+  /* Set a minimum width and remove default prose margins */
+  min-width: 100%;
+  width: auto;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  overflow: hidden; /* Ensures border-radius is respected on child elements */
+}
+
+.prose th,
+.prose td {
+  padding: 0.75rem 1rem;
+  border: 1px solid hsl(var(--border));
+  vertical-align: top;
+  /* Remove default prose margins from paragraphs inside table cells */
+}
+.prose th p,
+.prose td p {
+  margin: 0;
+}
+
+/* Table Header Styling */
+.prose th {
+  font-weight: 600;
+  text-align: left;
+  background-color: hsl(var(--muted)) !important; /* Use theme variable */
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Striped Rows */
+.prose tr:nth-child(even) {
+  background-color: #fefefe !important;
+}
+.prose tr:nth-child(odd) {
+  background-color: #f9fafb !important;
+}
+
+/* === List Styles === */
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.prose li {
+  margin: 0.25rem 0;
+}

@@ -17,3 +17,4 @@ export const formatPrice = (price: number) => {
       .trim() + " MMK"
   );
 };
+

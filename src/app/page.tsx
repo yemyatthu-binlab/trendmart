@@ -1,18 +1,15 @@
-// app/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import { useDebouncedCallback } from "use-debounce";
 import {
   useListPublicProductsQuery,
-  useGetMainSubCategoriesQuery,
   GetMainSubCategoriesQuery,
   useGetCategoriesQuery,
 } from "@/graphql/generated";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -37,10 +34,18 @@ import {
 } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ProductCard } from "@/components/organisms/products/ProductCard/ProductCard";
+import { useAuthStore } from "@/store/auth";
+import { AuthDialog } from "@/components/organisms/auth/AuthDialog/AuthDialog"; // Import the new dialog
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
-// ============================================================================
-// TYPES
-// ============================================================================
 type Category = GetMainSubCategoriesQuery["getMainSubCategories"][number];
 type SortOrder = "asc" | "desc";
 type SortField = "createdAt" | "price";
@@ -66,10 +71,6 @@ export const CATEGORY_GRADIENTS = [
   "linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)", // mint → yellow
 ];
 
-// ============================================================================
-// NEW COMPONENT: AppHeader
-// Suggested location: components/layout/AppHeader.tsx
-// ============================================================================
 const AppHeader = ({
   onCategorySelect,
 }: {
@@ -79,6 +80,8 @@ const AppHeader = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { data: categoriesData, loading: categoriesLoading } =
     useGetCategoriesQuery();
+  const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuthStore();
 
   const handleCategoryClick = (categoryId: number) => {
     onCategorySelect(categoryId);
@@ -87,13 +90,16 @@ const AppHeader = ({
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-2 sm:px-15 lg:px-30">
         <div className="container flex h-16 items-center">
           <div className="mr-8 flex items-center">
-            <a href="/" className="flex items-center gap-2 font-bold text-lg">
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-bold text-lg"
+            >
               <ShoppingBag className="h-6 w-6" />
               <span>TrendMart</span>
-            </a>
+            </Link>
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
@@ -119,9 +125,40 @@ const AppHeader = ({
             <Button variant="ghost" size="icon">
               <Heart className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    {/* <User className="h-5 w-5" /> */}
+                    <div className="h-5 w-5 rounded-full bg-black">
+                      <p className="text-white">
+                        {user?.fullName.charAt(0).toUpperCase()}
+                      </p>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    Hi, {user?.fullName.split(" ")[0]}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/account/orders">My Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setAuthDialogOpen(true)}
+              >
+                <User className="h-5 w-5" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon">
               <ShoppingCart className="h-5 w-5" />
             </Button>
@@ -136,6 +173,7 @@ const AppHeader = ({
           </div>
         </div>
       </header>
+      <AuthDialog isOpen={isAuthDialogOpen} onOpenChange={setAuthDialogOpen} />
       <MegaMenu
         isOpen={isMenuOpen}
         onOpenChange={setIsMenuOpen}
@@ -154,10 +192,6 @@ const AppHeader = ({
   );
 };
 
-// ============================================================================
-// NEW COMPONENT: MegaMenu
-// Suggested location: components/organisms/MegaMenu.tsx
-// ============================================================================
 const MegaMenu = ({
   isOpen,
   onOpenChange,
@@ -246,10 +280,6 @@ const MegaMenu = ({
   );
 };
 
-// ============================================================================
-// NEW COMPONENT: SearchDialog
-// Suggested location: components/organisms/SearchDialog.tsx
-// ============================================================================
 const SearchDialog = ({
   isOpen,
   onOpenChange,
@@ -312,9 +342,6 @@ const SearchDialog = ({
   );
 };
 
-// ============================================================================
-// EXISTING COMPONENT: HeroSlider (Unchanged)
-// ============================================================================
 const SLIDES = [
   {
     src: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop",
@@ -408,7 +435,7 @@ const ProductGrid = ({ filters }: { filters: Filters }) => {
         search: filters.search,
         categoryIds: filters.categoryIds,
       },
-      sort: filters.sort,
+      // sort: filters.sort,
     },
     fetchPolicy: "cache-and-network",
   });
@@ -420,8 +447,8 @@ const ProductGrid = ({ filters }: { filters: Filters }) => {
   // Always render the grid container to maintain layout stability
   return (
     <main className="w-full">
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-        {loading ? (
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 w-full">
+        {loading && !data ? (
           // Skeletons are rendered inside the grid
           Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-2">
@@ -435,7 +462,7 @@ const ProductGrid = ({ filters }: { filters: Filters }) => {
           <div className="col-span-full text-center py-20">
             <h2 className="text-2xl font-semibold">No Products Found</h2>
             <p className="text-muted-foreground mt-2">
-              Try adjusting your filters to find what you're looking for.
+              Try adjusting your filters to find what you&#39;re looking for.
             </p>
           </div>
         ) : (

@@ -59,6 +59,15 @@ export type Color = {
   name: Scalars['String']['output'];
 };
 
+export type CreateOrderInput = {
+  items: Array<OrderItemInput>;
+  paymentMethod: Scalars['String']['input'];
+  paymentScreenshotUrl: Scalars['String']['input'];
+  saveAddress?: InputMaybe<Scalars['Boolean']['input']>;
+  shippingAddress: ShippingAddressInput;
+  shippingMethod: Scalars['String']['input'];
+};
+
 export type CreateProductImageInput = {
   altText?: InputMaybe<Scalars['String']['input']>;
   imageUrl: Scalars['String']['input'];
@@ -90,22 +99,31 @@ export type CustomerListResponse = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  _empty?: Maybe<Scalars['String']['output']>;
   assignSizesToSubCategory: Category;
   createCategory: Category;
   createColor: Color;
+  /** Creates a new order after validating stock, address, and payment info. */
+  createOrder: Order;
   createProduct: Product;
   createSize: Size;
+  customerLogin: AuthPayload;
   deleteCategory: SuccessResponse;
   deleteColor: SuccessResponse;
   deleteProduct: Product;
   deleteSize: SuccessResponse;
   login: AuthPayload;
   removeSizeFromSubCategory: Category;
+  requestRegistrationOtp: Scalars['String']['output'];
   updateCategory: Category;
   updateColor: Color;
+  updateOrderStatus: Order;
   updateProduct: Product;
   updateSize: Size;
   uploadImage: UploadedImage;
+  /** Uploads a payment screenshot file and returns its public URL. */
+  uploadPaymentScreenshot: UploadedFileResponse;
+  verifyOtpAndCompleteRegistration: AuthPayload;
 };
 
 
@@ -127,6 +145,11 @@ export type MutationCreateColorArgs = {
 };
 
 
+export type MutationCreateOrderArgs = {
+  input: CreateOrderInput;
+};
+
+
 export type MutationCreateProductArgs = {
   input: CreateProductInput;
 };
@@ -134,6 +157,12 @@ export type MutationCreateProductArgs = {
 
 export type MutationCreateSizeArgs = {
   value: Scalars['String']['input'];
+};
+
+
+export type MutationCustomerLoginArgs = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
 };
 
 
@@ -169,6 +198,13 @@ export type MutationRemoveSizeFromSubCategoryArgs = {
 };
 
 
+export type MutationRequestRegistrationOtpArgs = {
+  email: Scalars['String']['input'];
+  fullName: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
+
 export type MutationUpdateCategoryArgs = {
   id: Scalars['ID']['input'];
   name: Scalars['String']['input'];
@@ -179,6 +215,12 @@ export type MutationUpdateColorArgs = {
   hexCode?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationUpdateOrderStatusArgs = {
+  orderId: Scalars['ID']['input'];
+  status: OrderStatus;
 };
 
 
@@ -196,6 +238,17 @@ export type MutationUpdateSizeArgs = {
 
 export type MutationUploadImageArgs = {
   file: Scalars['Upload']['input'];
+};
+
+
+export type MutationUploadPaymentScreenshotArgs = {
+  file: Scalars['Upload']['input'];
+};
+
+
+export type MutationVerifyOtpAndCompleteRegistrationArgs = {
+  email: Scalars['String']['input'];
+  otp: Scalars['String']['input'];
 };
 
 export type Order = {
@@ -218,6 +271,11 @@ export type OrderItem = {
   product: Product;
   productVariant: ProductVariant;
   quantity: Scalars['Int']['output'];
+};
+
+export type OrderItemInput = {
+  productVariantId: Scalars['ID']['input'];
+  quantity: Scalars['Int']['input'];
 };
 
 export type OrderListResponse = {
@@ -320,6 +378,8 @@ export type Query = {
   getCustomerById?: Maybe<User>;
   getCustomers?: Maybe<CustomerListResponse>;
   getMainSubCategories: Array<Category>;
+  getMyOrderById?: Maybe<Order>;
+  getMyOrders: OrderListResponse;
   getOrderById?: Maybe<Order>;
   getOrders: OrderListResponse;
   getProductById?: Maybe<Product>;
@@ -327,6 +387,7 @@ export type Query = {
   getSizes?: Maybe<Array<Size>>;
   getUnassignedSizesForCategory: Array<Size>;
   listPublicProducts?: Maybe<PublicProductListResponse>;
+  me?: Maybe<User>;
 };
 
 
@@ -336,6 +397,17 @@ export type QueryGetCustomerByIdArgs = {
 
 
 export type QueryGetCustomersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGetMyOrderByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetMyOrdersArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   take?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -374,6 +446,14 @@ export type QueryListPublicProductsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<ProductSortInput>;
   take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type ShippingAddressInput = {
+  addressLine1: Scalars['String']['input'];
+  city: Scalars['String']['input'];
+  fullName: Scalars['String']['input'];
+  phoneNumber: Scalars['String']['input'];
+  postalCode: Scalars['String']['input'];
 };
 
 export type Size = {
@@ -418,6 +498,11 @@ export type UpdateProductVariantInput = {
   stock: Scalars['Int']['input'];
 };
 
+export type UploadedFileResponse = {
+  __typename?: 'UploadedFileResponse';
+  url: Scalars['String']['output'];
+};
+
 export type UploadedImage = {
   __typename?: 'UploadedImage';
   filename: Scalars['String']['output'];
@@ -426,12 +511,12 @@ export type UploadedImage = {
 
 export type User = {
   __typename?: 'User';
-  addresses?: Maybe<Array<Address>>;
+  addresses: Array<Address>;
   createdAt: Scalars['String']['output'];
   email: Scalars['String']['output'];
   fullName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  phoneNumber: Scalars['String']['output'];
+  phoneNumber?: Maybe<Scalars['String']['output']>;
   role: UserRole;
   updatedAt: Scalars['String']['output'];
 };
@@ -538,7 +623,32 @@ export type LoginMutationVariables = Exact<{
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', token: string, user: { __typename?: 'User', id: string, fullName: string, phoneNumber: string, role: UserRole } } };
+export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', token: string, user: { __typename?: 'User', id: string, fullName: string, phoneNumber?: string | null, role: UserRole } } };
+
+export type CustomerLoginMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+
+export type CustomerLoginMutation = { __typename?: 'Mutation', customerLogin: { __typename?: 'AuthPayload', token: string, user: { __typename?: 'User', id: string, fullName: string, email: string, role: UserRole } } };
+
+export type RequestRegistrationOtpMutationVariables = Exact<{
+  fullName: Scalars['String']['input'];
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+
+export type RequestRegistrationOtpMutation = { __typename?: 'Mutation', requestRegistrationOtp: string };
+
+export type VerifyOtpAndCompleteRegistrationMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+  otp: Scalars['String']['input'];
+}>;
+
+
+export type VerifyOtpAndCompleteRegistrationMutation = { __typename?: 'Mutation', verifyOtpAndCompleteRegistration: { __typename?: 'AuthPayload', token: string, user: { __typename?: 'User', id: string, fullName: string, email: string, role: UserRole } } };
 
 export type GetCategoriesForManagementQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -563,14 +673,14 @@ export type GetCustomersQueryVariables = Exact<{
 }>;
 
 
-export type GetCustomersQuery = { __typename?: 'Query', getCustomers?: { __typename?: 'CustomerListResponse', totalCount: number, customers: Array<{ __typename?: 'User', id: string, fullName: string, email: string, phoneNumber: string, createdAt: string }> } | null };
+export type GetCustomersQuery = { __typename?: 'Query', getCustomers?: { __typename?: 'CustomerListResponse', totalCount: number, customers: Array<{ __typename?: 'User', id: string, fullName: string, email: string, phoneNumber?: string | null, createdAt: string }> } | null };
 
 export type GetCustomerByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCustomerByIdQuery = { __typename?: 'Query', getCustomerById?: { __typename?: 'User', id: string, fullName: string, email: string, phoneNumber: string, createdAt: string, updatedAt: string, addresses?: Array<{ __typename?: 'Address', id: string, fullName: string, phoneNumber: string, addressLine1: string, addressLine2?: string | null, city: string, state: string, postalCode: string, isDefault?: boolean | null }> | null } | null };
+export type GetCustomerByIdQuery = { __typename?: 'Query', getCustomerById?: { __typename?: 'User', id: string, fullName: string, email: string, phoneNumber?: string | null, createdAt: string, updatedAt: string, addresses: Array<{ __typename?: 'Address', id: string, fullName: string, phoneNumber: string, addressLine1: string, addressLine2?: string | null, city: string, postalCode: string, isDefault?: boolean | null }> } | null };
 
 export type GetOrdersListQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']['input']>;
@@ -585,7 +695,44 @@ export type GetOrderByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetOrderByIdQuery = { __typename?: 'Query', getOrderById?: { __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, user: { __typename?: 'User', id: string, fullName: string, email: string }, shippingAddress: { __typename?: 'Address', fullName: string, phoneNumber: string, addressLine1: string, addressLine2?: string | null, city: string, state: string, postalCode: string }, payment?: { __typename?: 'Payment', paymentMethod: PaymentMethod, paymentStatus: PaymentStatus, amount: number } | null, items: Array<{ __typename?: 'OrderItem', id: string, quantity: number, priceAtPurchase: number, product: { __typename?: 'Product', id: string, name: string }, productVariant: { __typename?: 'ProductVariant', id: string, size: { __typename?: 'Size', value: string }, color: { __typename?: 'Color', name: string }, images?: Array<{ __typename?: 'ProductImage', imageUrl: string }> | null } }> } | null };
+export type GetOrderByIdQuery = { __typename?: 'Query', getOrderById?: { __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, user: { __typename?: 'User', id: string, fullName: string, email: string }, shippingAddress: { __typename?: 'Address', fullName: string, phoneNumber: string, addressLine1: string, addressLine2?: string | null, city: string, postalCode: string }, payment?: { __typename?: 'Payment', paymentMethod: PaymentMethod, paymentStatus: PaymentStatus, amount: number, manualPaymentScreenshotUrl?: string | null, createdAt: string } | null, items: Array<{ __typename?: 'OrderItem', id: string, quantity: number, priceAtPurchase: number, product: { __typename?: 'Product', id: string, name: string }, productVariant: { __typename?: 'ProductVariant', id: string, size: { __typename?: 'Size', value: string }, color: { __typename?: 'Color', name: string }, images?: Array<{ __typename?: 'ProductImage', imageUrl: string }> | null } }> } | null };
+
+export type GetMyOrdersListQueryVariables = Exact<{
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetMyOrdersListQuery = { __typename?: 'Query', getMyOrders: { __typename?: 'OrderListResponse', totalCount: number, orders: Array<{ __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, items: Array<{ __typename?: 'OrderItem', id: string }> }> } };
+
+export type GetMyOrderByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetMyOrderByIdQuery = { __typename?: 'Query', getMyOrderById?: { __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, shippingAddress: { __typename?: 'Address', fullName: string, phoneNumber: string, addressLine1: string, city: string, postalCode: string }, payment?: { __typename?: 'Payment', paymentMethod: PaymentMethod, paymentStatus: PaymentStatus } | null, items: Array<{ __typename?: 'OrderItem', id: string, quantity: number, priceAtPurchase: number, product: { __typename?: 'Product', id: string, name: string }, productVariant: { __typename?: 'ProductVariant', id: string, size: { __typename?: 'Size', value: string }, color: { __typename?: 'Color', name: string }, images?: Array<{ __typename?: 'ProductImage', imageUrl: string }> | null } }> } | null };
+
+export type UploadPaymentScreenshotMutationVariables = Exact<{
+  file: Scalars['Upload']['input'];
+}>;
+
+
+export type UploadPaymentScreenshotMutation = { __typename?: 'Mutation', uploadPaymentScreenshot: { __typename?: 'UploadedFileResponse', url: string } };
+
+export type CreateOrderMutationVariables = Exact<{
+  input: CreateOrderInput;
+}>;
+
+
+export type CreateOrderMutation = { __typename?: 'Mutation', createOrder: { __typename?: 'Order', id: string, orderStatus: OrderStatus, orderTotal: number } };
+
+export type UpdateOrderStatusMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+  status: OrderStatus;
+}>;
+
+
+export type UpdateOrderStatusMutation = { __typename?: 'Mutation', updateOrderStatus: { __typename?: 'Order', id: string, orderStatus: OrderStatus } };
 
 export type GetProductsListQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']['input']>;
@@ -631,6 +778,11 @@ export type GetCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetCategoriesQuery = { __typename?: 'Query', getCategories?: Array<{ __typename?: 'Category', id: string, name: string, sizes?: Array<{ __typename?: 'Size', id: string, value: string }> | null, children?: Array<{ __typename?: 'Category', id: string, name: string }> | null }> | null };
+
+export type GetMeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetMeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: string, fullName: string, email: string, role: UserRole, addresses: Array<{ __typename?: 'Address', id: string, fullName: string, phoneNumber: string, addressLine1: string, city: string, postalCode: string, isDefault?: boolean | null }> } | null };
 
 
 export const CreateCategoryDocument = gql`
@@ -1101,6 +1253,119 @@ export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginM
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const CustomerLoginDocument = gql`
+    mutation CustomerLogin($email: String!, $password: String!) {
+  customerLogin(email: $email, password: $password) {
+    token
+    user {
+      id
+      fullName
+      email
+      role
+    }
+  }
+}
+    `;
+export type CustomerLoginMutationFn = Apollo.MutationFunction<CustomerLoginMutation, CustomerLoginMutationVariables>;
+
+/**
+ * __useCustomerLoginMutation__
+ *
+ * To run a mutation, you first call `useCustomerLoginMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCustomerLoginMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [customerLoginMutation, { data, loading, error }] = useCustomerLoginMutation({
+ *   variables: {
+ *      email: // value for 'email'
+ *      password: // value for 'password'
+ *   },
+ * });
+ */
+export function useCustomerLoginMutation(baseOptions?: Apollo.MutationHookOptions<CustomerLoginMutation, CustomerLoginMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CustomerLoginMutation, CustomerLoginMutationVariables>(CustomerLoginDocument, options);
+      }
+export type CustomerLoginMutationHookResult = ReturnType<typeof useCustomerLoginMutation>;
+export type CustomerLoginMutationResult = Apollo.MutationResult<CustomerLoginMutation>;
+export type CustomerLoginMutationOptions = Apollo.BaseMutationOptions<CustomerLoginMutation, CustomerLoginMutationVariables>;
+export const RequestRegistrationOtpDocument = gql`
+    mutation RequestRegistrationOtp($fullName: String!, $email: String!, $password: String!) {
+  requestRegistrationOtp(fullName: $fullName, email: $email, password: $password)
+}
+    `;
+export type RequestRegistrationOtpMutationFn = Apollo.MutationFunction<RequestRegistrationOtpMutation, RequestRegistrationOtpMutationVariables>;
+
+/**
+ * __useRequestRegistrationOtpMutation__
+ *
+ * To run a mutation, you first call `useRequestRegistrationOtpMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRequestRegistrationOtpMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [requestRegistrationOtpMutation, { data, loading, error }] = useRequestRegistrationOtpMutation({
+ *   variables: {
+ *      fullName: // value for 'fullName'
+ *      email: // value for 'email'
+ *      password: // value for 'password'
+ *   },
+ * });
+ */
+export function useRequestRegistrationOtpMutation(baseOptions?: Apollo.MutationHookOptions<RequestRegistrationOtpMutation, RequestRegistrationOtpMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RequestRegistrationOtpMutation, RequestRegistrationOtpMutationVariables>(RequestRegistrationOtpDocument, options);
+      }
+export type RequestRegistrationOtpMutationHookResult = ReturnType<typeof useRequestRegistrationOtpMutation>;
+export type RequestRegistrationOtpMutationResult = Apollo.MutationResult<RequestRegistrationOtpMutation>;
+export type RequestRegistrationOtpMutationOptions = Apollo.BaseMutationOptions<RequestRegistrationOtpMutation, RequestRegistrationOtpMutationVariables>;
+export const VerifyOtpAndCompleteRegistrationDocument = gql`
+    mutation VerifyOtpAndCompleteRegistration($email: String!, $otp: String!) {
+  verifyOtpAndCompleteRegistration(email: $email, otp: $otp) {
+    token
+    user {
+      id
+      fullName
+      email
+      role
+    }
+  }
+}
+    `;
+export type VerifyOtpAndCompleteRegistrationMutationFn = Apollo.MutationFunction<VerifyOtpAndCompleteRegistrationMutation, VerifyOtpAndCompleteRegistrationMutationVariables>;
+
+/**
+ * __useVerifyOtpAndCompleteRegistrationMutation__
+ *
+ * To run a mutation, you first call `useVerifyOtpAndCompleteRegistrationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useVerifyOtpAndCompleteRegistrationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [verifyOtpAndCompleteRegistrationMutation, { data, loading, error }] = useVerifyOtpAndCompleteRegistrationMutation({
+ *   variables: {
+ *      email: // value for 'email'
+ *      otp: // value for 'otp'
+ *   },
+ * });
+ */
+export function useVerifyOtpAndCompleteRegistrationMutation(baseOptions?: Apollo.MutationHookOptions<VerifyOtpAndCompleteRegistrationMutation, VerifyOtpAndCompleteRegistrationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<VerifyOtpAndCompleteRegistrationMutation, VerifyOtpAndCompleteRegistrationMutationVariables>(VerifyOtpAndCompleteRegistrationDocument, options);
+      }
+export type VerifyOtpAndCompleteRegistrationMutationHookResult = ReturnType<typeof useVerifyOtpAndCompleteRegistrationMutation>;
+export type VerifyOtpAndCompleteRegistrationMutationResult = Apollo.MutationResult<VerifyOtpAndCompleteRegistrationMutation>;
+export type VerifyOtpAndCompleteRegistrationMutationOptions = Apollo.BaseMutationOptions<VerifyOtpAndCompleteRegistrationMutation, VerifyOtpAndCompleteRegistrationMutationVariables>;
 export const GetCategoriesForManagementDocument = gql`
     query GetCategoriesForManagement {
   getCategoriesForManagement {
@@ -1296,7 +1561,6 @@ export const GetCustomerByIdDocument = gql`
       addressLine1
       addressLine2
       city
-      state
       postalCode
       isDefault
     }
@@ -1407,13 +1671,14 @@ export const GetOrderByIdDocument = gql`
       addressLine1
       addressLine2
       city
-      state
       postalCode
     }
     payment {
       paymentMethod
       paymentStatus
       amount
+      manualPaymentScreenshotUrl
+      createdAt
     }
     items {
       id
@@ -1472,6 +1737,234 @@ export type GetOrderByIdQueryHookResult = ReturnType<typeof useGetOrderByIdQuery
 export type GetOrderByIdLazyQueryHookResult = ReturnType<typeof useGetOrderByIdLazyQuery>;
 export type GetOrderByIdSuspenseQueryHookResult = ReturnType<typeof useGetOrderByIdSuspenseQuery>;
 export type GetOrderByIdQueryResult = Apollo.QueryResult<GetOrderByIdQuery, GetOrderByIdQueryVariables>;
+export const GetMyOrdersListDocument = gql`
+    query GetMyOrdersList($skip: Int, $take: Int) {
+  getMyOrders(skip: $skip, take: $take) {
+    orders {
+      id
+      createdAt
+      orderStatus
+      orderTotal
+      items {
+        id
+      }
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetMyOrdersListQuery__
+ *
+ * To run a query within a React component, call `useGetMyOrdersListQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyOrdersListQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyOrdersListQuery({
+ *   variables: {
+ *      skip: // value for 'skip'
+ *      take: // value for 'take'
+ *   },
+ * });
+ */
+export function useGetMyOrdersListQuery(baseOptions?: Apollo.QueryHookOptions<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>(GetMyOrdersListDocument, options);
+      }
+export function useGetMyOrdersListLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>(GetMyOrdersListDocument, options);
+        }
+export function useGetMyOrdersListSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>(GetMyOrdersListDocument, options);
+        }
+export type GetMyOrdersListQueryHookResult = ReturnType<typeof useGetMyOrdersListQuery>;
+export type GetMyOrdersListLazyQueryHookResult = ReturnType<typeof useGetMyOrdersListLazyQuery>;
+export type GetMyOrdersListSuspenseQueryHookResult = ReturnType<typeof useGetMyOrdersListSuspenseQuery>;
+export type GetMyOrdersListQueryResult = Apollo.QueryResult<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>;
+export const GetMyOrderByIdDocument = gql`
+    query GetMyOrderById($id: ID!) {
+  getMyOrderById(id: $id) {
+    id
+    createdAt
+    orderStatus
+    orderTotal
+    shippingAddress {
+      fullName
+      phoneNumber
+      addressLine1
+      city
+      postalCode
+    }
+    payment {
+      paymentMethod
+      paymentStatus
+    }
+    items {
+      id
+      quantity
+      priceAtPurchase
+      product {
+        id
+        name
+      }
+      productVariant {
+        id
+        size {
+          value
+        }
+        color {
+          name
+        }
+        images {
+          imageUrl
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetMyOrderByIdQuery__
+ *
+ * To run a query within a React component, call `useGetMyOrderByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyOrderByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyOrderByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetMyOrderByIdQuery(baseOptions: Apollo.QueryHookOptions<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables> & ({ variables: GetMyOrderByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables>(GetMyOrderByIdDocument, options);
+      }
+export function useGetMyOrderByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables>(GetMyOrderByIdDocument, options);
+        }
+export function useGetMyOrderByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables>(GetMyOrderByIdDocument, options);
+        }
+export type GetMyOrderByIdQueryHookResult = ReturnType<typeof useGetMyOrderByIdQuery>;
+export type GetMyOrderByIdLazyQueryHookResult = ReturnType<typeof useGetMyOrderByIdLazyQuery>;
+export type GetMyOrderByIdSuspenseQueryHookResult = ReturnType<typeof useGetMyOrderByIdSuspenseQuery>;
+export type GetMyOrderByIdQueryResult = Apollo.QueryResult<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables>;
+export const UploadPaymentScreenshotDocument = gql`
+    mutation UploadPaymentScreenshot($file: Upload!) {
+  uploadPaymentScreenshot(file: $file) {
+    url
+  }
+}
+    `;
+export type UploadPaymentScreenshotMutationFn = Apollo.MutationFunction<UploadPaymentScreenshotMutation, UploadPaymentScreenshotMutationVariables>;
+
+/**
+ * __useUploadPaymentScreenshotMutation__
+ *
+ * To run a mutation, you first call `useUploadPaymentScreenshotMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUploadPaymentScreenshotMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [uploadPaymentScreenshotMutation, { data, loading, error }] = useUploadPaymentScreenshotMutation({
+ *   variables: {
+ *      file: // value for 'file'
+ *   },
+ * });
+ */
+export function useUploadPaymentScreenshotMutation(baseOptions?: Apollo.MutationHookOptions<UploadPaymentScreenshotMutation, UploadPaymentScreenshotMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UploadPaymentScreenshotMutation, UploadPaymentScreenshotMutationVariables>(UploadPaymentScreenshotDocument, options);
+      }
+export type UploadPaymentScreenshotMutationHookResult = ReturnType<typeof useUploadPaymentScreenshotMutation>;
+export type UploadPaymentScreenshotMutationResult = Apollo.MutationResult<UploadPaymentScreenshotMutation>;
+export type UploadPaymentScreenshotMutationOptions = Apollo.BaseMutationOptions<UploadPaymentScreenshotMutation, UploadPaymentScreenshotMutationVariables>;
+export const CreateOrderDocument = gql`
+    mutation CreateOrder($input: CreateOrderInput!) {
+  createOrder(input: $input) {
+    id
+    orderStatus
+    orderTotal
+  }
+}
+    `;
+export type CreateOrderMutationFn = Apollo.MutationFunction<CreateOrderMutation, CreateOrderMutationVariables>;
+
+/**
+ * __useCreateOrderMutation__
+ *
+ * To run a mutation, you first call `useCreateOrderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateOrderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createOrderMutation, { data, loading, error }] = useCreateOrderMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateOrderMutation(baseOptions?: Apollo.MutationHookOptions<CreateOrderMutation, CreateOrderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateOrderMutation, CreateOrderMutationVariables>(CreateOrderDocument, options);
+      }
+export type CreateOrderMutationHookResult = ReturnType<typeof useCreateOrderMutation>;
+export type CreateOrderMutationResult = Apollo.MutationResult<CreateOrderMutation>;
+export type CreateOrderMutationOptions = Apollo.BaseMutationOptions<CreateOrderMutation, CreateOrderMutationVariables>;
+export const UpdateOrderStatusDocument = gql`
+    mutation UpdateOrderStatus($orderId: ID!, $status: OrderStatus!) {
+  updateOrderStatus(orderId: $orderId, status: $status) {
+    id
+    orderStatus
+  }
+}
+    `;
+export type UpdateOrderStatusMutationFn = Apollo.MutationFunction<UpdateOrderStatusMutation, UpdateOrderStatusMutationVariables>;
+
+/**
+ * __useUpdateOrderStatusMutation__
+ *
+ * To run a mutation, you first call `useUpdateOrderStatusMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateOrderStatusMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateOrderStatusMutation, { data, loading, error }] = useUpdateOrderStatusMutation({
+ *   variables: {
+ *      orderId: // value for 'orderId'
+ *      status: // value for 'status'
+ *   },
+ * });
+ */
+export function useUpdateOrderStatusMutation(baseOptions?: Apollo.MutationHookOptions<UpdateOrderStatusMutation, UpdateOrderStatusMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateOrderStatusMutation, UpdateOrderStatusMutationVariables>(UpdateOrderStatusDocument, options);
+      }
+export type UpdateOrderStatusMutationHookResult = ReturnType<typeof useUpdateOrderStatusMutation>;
+export type UpdateOrderStatusMutationResult = Apollo.MutationResult<UpdateOrderStatusMutation>;
+export type UpdateOrderStatusMutationOptions = Apollo.BaseMutationOptions<UpdateOrderStatusMutation, UpdateOrderStatusMutationVariables>;
 export const GetProductsListDocument = gql`
     query GetProductsList($skip: Int, $take: Int) {
   getProducts(skip: $skip, take: $take) {
@@ -1859,3 +2352,54 @@ export type GetCategoriesQueryHookResult = ReturnType<typeof useGetCategoriesQue
 export type GetCategoriesLazyQueryHookResult = ReturnType<typeof useGetCategoriesLazyQuery>;
 export type GetCategoriesSuspenseQueryHookResult = ReturnType<typeof useGetCategoriesSuspenseQuery>;
 export type GetCategoriesQueryResult = Apollo.QueryResult<GetCategoriesQuery, GetCategoriesQueryVariables>;
+export const GetMeDocument = gql`
+    query GetMe {
+  me {
+    id
+    fullName
+    email
+    role
+    addresses {
+      id
+      fullName
+      phoneNumber
+      addressLine1
+      city
+      postalCode
+      isDefault
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetMeQuery__
+ *
+ * To run a query within a React component, call `useGetMeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMeQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMeQuery(baseOptions?: Apollo.QueryHookOptions<GetMeQuery, GetMeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMeQuery, GetMeQueryVariables>(GetMeDocument, options);
+      }
+export function useGetMeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMeQuery, GetMeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMeQuery, GetMeQueryVariables>(GetMeDocument, options);
+        }
+export function useGetMeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMeQuery, GetMeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMeQuery, GetMeQueryVariables>(GetMeDocument, options);
+        }
+export type GetMeQueryHookResult = ReturnType<typeof useGetMeQuery>;
+export type GetMeLazyQueryHookResult = ReturnType<typeof useGetMeLazyQuery>;
+export type GetMeSuspenseQueryHookResult = ReturnType<typeof useGetMeSuspenseQuery>;
+export type GetMeQueryResult = Apollo.QueryResult<GetMeQuery, GetMeQueryVariables>;
