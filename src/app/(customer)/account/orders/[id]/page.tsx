@@ -1,8 +1,5 @@
-// your-project/app/account/orders/[id]/page.tsx
-
 "use client";
 
-import { useQuery } from "@apollo/client";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";

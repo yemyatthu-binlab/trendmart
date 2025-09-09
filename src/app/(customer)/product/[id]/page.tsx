@@ -18,18 +18,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import clsx from "clsx";
 import {
-  GetProductByIdQuery,
+  Color,
+  ProductImage,
+  ProductVariant,
   useGetProductByIdQuery,
 } from "@/graphql/generated";
 import { formatPrice } from "@/lib/utils";
 import "@/styles/prose-style.css";
 import { ProductReviews } from "@/components/organisms/products/ProductReview/ProductReview";
-// NEW: Import your authentication store
 import { useAuthStore } from "@/store/auth";
-import { set } from "zod";
+import Link from "next/link";
 
-// Types and ImageMagnifier component remain unchanged
-type ProductVariant = GetProductByIdQuery["getProductById"]["variants"][0];
 type ProductColor = ProductVariant["color"];
 type ProductSize = ProductVariant["size"];
 
@@ -38,9 +37,6 @@ interface ColorGroup {
   variants: ProductVariant[];
 }
 
-// ============================================================================
-// ImageMagnifier Component (NO CHANGES)
-// ============================================================================
 const ImageMagnifier = ({
   src,
   alt,
@@ -150,9 +146,9 @@ export default function ProductDetailPage() {
         (group) => group.color.id === variant?.color.id
       );
       if (existingGroup) {
-        existingGroup.variants.push(variant);
+        existingGroup.variants.push(variant!);
       } else {
-        acc.push({ color: variant?.color, variants: [variant] });
+        acc.push({ color: variant?.color as Color, variants: [variant!] });
       }
       return acc;
     }, [] as ColorGroup[]) || [];
@@ -242,9 +238,9 @@ export default function ProductDetailPage() {
   }
 
   const product = data.getProductById;
-  const primaryImage = selectedVariant?.images.find((img) => img.isPrimary);
-
-  // NEW: Derived state for easier use in the component
+  const primaryImage: ProductImage | undefined = selectedVariant?.images?.find(
+    (img: ProductImage) => img.isPrimary
+  );
   const isOutOfStock = !selectedVariant || selectedVariant.stock === 0;
   const subtotal = (selectedVariant?.price || 0) * quantity;
   const isPurchaseDisabled = !isAuthenticated || isOutOfStock;
@@ -327,7 +323,7 @@ export default function ProductDetailPage() {
                           : "border-muted-foreground/30"
                       )}
                       style={{
-                        backgroundColor: group.color.hexCode,
+                        backgroundColor: group?.color?.hexCode || "#ccc",
                       }}
                     />
                   );
@@ -472,16 +468,33 @@ export default function ProductDetailPage() {
                     />
                   </div>
                 </TabsContent>
-                <TabsContent value="reviews" className="mt-4">
-                  <ProductReviews />
+                <TabsContent value="reviews" className="mt-4 min-h-[500px]">
+                  <ProductReviews productId={id} />
                 </TabsContent>
-                <TabsContent value="shipping" className="mt-4">
+                <TabsContent value="shipping" className="mt-4 min-h-[500px]">
                   <div className="prose dark:prose-invert max-w-none">
-                    <h3>Our Policy</h3>
                     <p>
-                      Details about the damage and return policy will be updated
-                      here soon. Please contact customer support for any
-                      immediate questions.
+                      We want you to be happy with your purchase. If the product
+                      arrives with damaged, you can request a refund within 7
+                      days of your order date. All we need is a proof of
+                      purchase, like your order history or receipt. Getting
+                      started is simple: just reach out to us at{" "}
+                      <strong>
+                        <Link
+                          href={"tel:09958453693"}
+                          className="hover:underline"
+                        >
+                          09958453693
+                        </Link>
+                      </strong>{" "}
+                      or fill out the{" "}
+                      <strong>
+                        <Link href={"/refund"} className="hover:underline">
+                          Damage & Return
+                        </Link>
+                      </strong>{" "}
+                      Form on our website. Once you do, our team will get back
+                      to you within 7 days to help you through the process.
                     </p>
                   </div>
                 </TabsContent>

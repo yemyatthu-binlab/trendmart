@@ -14,7 +14,6 @@ import { Product } from "@/graphql/generated";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -108,6 +107,7 @@ export function ProductForm({
 
   const isSizeDisabled = !selectedMainCategory || !selectedSubCategory;
 
+  // This function correctly adds IDs to the form state. No changes needed here.
   const transformInitialData = (
     data: InitialProductData
   ): ProductFormValues => ({
@@ -115,14 +115,14 @@ export function ProductForm({
     description: data.description || "",
     categoryIds: data?.categories?.map((c) => Number(c.id)) || [],
     variants: data.variants.map((v) => ({
-      id: Number(v.id),
+      id: Number(v.id), // Important: Keep the id
       sizeId: Number(v.size.id),
       colorId: Number(v.color.id),
       price: v.price,
       stock: v.stock,
       sku: v.sku || "",
       images: v.images.map((img) => ({
-        id: Number(img.id),
+        id: Number(img.id), // Important: Keep the id
         imageUrl: img.imageUrl,
         altText: img.altText || "",
         isPrimary: img.isPrimary,
@@ -186,19 +186,13 @@ export function ProductForm({
     name: "variants",
   });
 
-  // Set initial categories when in edit mode
   useEffect(() => {
-    console.log("initialData", initialData);
     if (isEditMode && initialData && initialData.categories?.length) {
-      // Find main category (assuming it's the first one)
       const mainCategoryId = initialData.categories[0].id;
       const mainCat = categories.find((c) => c.id === mainCategoryId);
-      console.log("mainCat", mainCat);
 
       if (mainCat) {
         setSelectedMainCategory(mainCat);
-
-        // Find sub-category if exists (assuming it's the second one)
         if (initialData.categories.length > 1) {
           const subCategoryId = initialData.categories[1].id;
           const subCat = subCategories.find((sc) => sc.id === subCategoryId);
@@ -222,13 +216,9 @@ export function ProductForm({
 
   const availableSizes = useMemo(() => {
     if (!selectedSubCategory) return sizes;
-
-    // Check if the subCategory has sizes property
     if (selectedSubCategory.sizes && Array.isArray(selectedSubCategory.sizes)) {
       return selectedSubCategory.sizes;
     }
-
-    // Fallback to the sizes prop
     return sizes;
   }, [selectedSubCategory, sizes]);
 
@@ -237,10 +227,7 @@ export function ProductForm({
     const category = categories.find((c) => c.id === id) || null;
     setSelectedMainCategory(category);
     setSelectedSubCategory(null);
-
-    const currentCategoryIds = form.getValues("categoryIds");
     const newCategoryIds = category ? [Number(category.id)] : [];
-
     form.setValue("categoryIds", newCategoryIds);
   };
 
@@ -248,7 +235,6 @@ export function ProductForm({
     if (!id) return;
     const subCategory = availableSubCategories.find((c) => c.id === id) || null;
     setSelectedSubCategory(subCategory);
-
     if (selectedMainCategory && subCategory) {
       form.setValue("categoryIds", [
         Number(selectedMainCategory.id),
@@ -257,20 +243,50 @@ export function ProductForm({
     }
   };
 
+  // --- FIX START: This is the corrected onSubmit function ---
   const onSubmit = async (values: ProductFormValues) => {
     try {
+      // Explicitly clean the variants and images to include IDs only when they are present and valid.
+      const cleanedVariants = values.variants.map((variant) => {
+        console.log("variant::", variant);
+
+        // The 'id' might be undefined or 0 for new variants, so we destructure it.
+        const { id, images, ...restOfVariant } = variant as any;
+
+        const cleanedImages = variant.images.map((image) => {
+          const { id: imgId, ...restOfImage } = image as any;
+          const imagePayload: any = { ...restOfImage };
+
+          // Only include the ID if we are in edit mode and the ID is a truthy value.
+          if (isEditMode && imgId) {
+            imagePayload.id = imgId;
+          }
+          return imagePayload;
+        });
+
+        const variantPayload: any = {
+          ...restOfVariant,
+          price: Math.round(restOfVariant.price), // Also handle price rounding here
+          images: cleanedImages,
+        };
+
+        console.log("test::", isEditMode, id);
+
+        // Only include the ID for the variant if we are in edit mode and it's a truthy value.
+        if (isEditMode && id) {
+          variantPayload.id = id;
+        }
+
+        return variantPayload;
+      });
+
       const inputForGraphQL = {
-        ...values,
-        variants: values.variants.map((variant) => ({
-          ...variant,
-          price: Math.round(variant.price),
-          ...(isEditMode && "id" in variant ? { id: (variant as any).id } : {}),
-          images: variant.images.map((img) => ({
-            ...img,
-            ...(isEditMode && "id" in img ? { id: (img as any).id } : {}),
-          })),
-        })),
+        name: values.name,
+        description: values.description,
+        categoryIds: values.categoryIds,
+        variants: cleanedVariants,
       };
+      // --- FIX END ---
 
       if (isEditMode) {
         await updateProduct({

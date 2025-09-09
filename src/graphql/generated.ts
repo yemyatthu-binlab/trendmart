@@ -68,6 +68,12 @@ export type CreateOrderInput = {
   shippingMethod: Scalars['String']['input'];
 };
 
+export type CreateProductFeedbackInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
+  rating: Scalars['Int']['input'];
+};
+
 export type CreateProductImageInput = {
   altText?: InputMaybe<Scalars['String']['input']>;
   imageUrl: Scalars['String']['input'];
@@ -91,11 +97,24 @@ export type CreateProductVariantInput = {
   stock: Scalars['Int']['input'];
 };
 
+export type CreateReturnRequestInput = {
+  items: Array<ReturnRequestItemInput>;
+  phoneNumber: Scalars['String']['input'];
+};
+
 export type CustomerListResponse = {
   __typename?: 'CustomerListResponse';
   customers: Array<User>;
   totalCount: Scalars['Int']['output'];
 };
+
+export enum FeedbackRating {
+  Five = 'FIVE',
+  Four = 'FOUR',
+  One = 'ONE',
+  Three = 'THREE',
+  Two = 'TWO'
+}
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -106,6 +125,8 @@ export type Mutation = {
   /** Creates a new order after validating stock, address, and payment info. */
   createOrder: Order;
   createProduct: Product;
+  createProductFeedback: ProductFeedback;
+  createReturnRequest: Scalars['Boolean']['output'];
   createSize: Size;
   customerLogin: AuthPayload;
   deleteCategory: SuccessResponse;
@@ -123,6 +144,7 @@ export type Mutation = {
   uploadImage: UploadedImage;
   /** Uploads a payment screenshot file and returns its public URL. */
   uploadPaymentScreenshot: UploadedFileResponse;
+  uploadReturnImage: UploadedFileResponse;
   verifyOtpAndCompleteRegistration: AuthPayload;
 };
 
@@ -152,6 +174,16 @@ export type MutationCreateOrderArgs = {
 
 export type MutationCreateProductArgs = {
   input: CreateProductInput;
+};
+
+
+export type MutationCreateProductFeedbackArgs = {
+  input: CreateProductFeedbackInput;
+};
+
+
+export type MutationCreateReturnRequestArgs = {
+  input: CreateReturnRequestInput;
 };
 
 
@@ -246,6 +278,11 @@ export type MutationUploadPaymentScreenshotArgs = {
 };
 
 
+export type MutationUploadReturnImageArgs = {
+  file: Scalars['Upload']['input'];
+};
+
+
 export type MutationVerifyOtpAndCompleteRegistrationArgs = {
   email: Scalars['String']['input'];
   otp: Scalars['String']['input'];
@@ -317,13 +354,26 @@ export enum PaymentStatus {
 
 export type Product = {
   __typename?: 'Product';
+  averageRating?: Maybe<Scalars['Float']['output']>;
   categories?: Maybe<Array<Category>>;
   createdAt: Scalars['String']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  feedback?: Maybe<Array<ProductFeedback>>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  ratingCounts?: Maybe<Array<RatingCount>>;
+  totalReviews?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['String']['output'];
   variants?: Maybe<Array<Maybe<ProductVariant>>>;
+};
+
+export type ProductFeedback = {
+  __typename?: 'ProductFeedback';
+  comment?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  rating: Scalars['Int']['output'];
+  user: User;
 };
 
 export type ProductFilterInput = {
@@ -371,6 +421,7 @@ export type PublicProductListResponse = {
 export type Query = {
   __typename?: 'Query';
   _empty?: Maybe<Scalars['String']['output']>;
+  findMyOrderForReturn?: Maybe<Order>;
   getCategories?: Maybe<Array<Category>>;
   getCategoriesForManagement: Array<Category>;
   getColors?: Maybe<Array<Color>>;
@@ -388,6 +439,11 @@ export type Query = {
   getUnassignedSizesForCategory: Array<Size>;
   listPublicProducts?: Maybe<PublicProductListResponse>;
   me?: Maybe<User>;
+};
+
+
+export type QueryFindMyOrderForReturnArgs = {
+  orderId: Scalars['String']['input'];
 };
 
 
@@ -447,6 +503,34 @@ export type QueryListPublicProductsArgs = {
   sort?: InputMaybe<ProductSortInput>;
   take?: InputMaybe<Scalars['Int']['input']>;
 };
+
+export type RatingCount = {
+  __typename?: 'RatingCount';
+  count: Scalars['Int']['output'];
+  star: Scalars['Int']['output'];
+};
+
+export enum ReturnReason {
+  Damaged = 'DAMAGED',
+  Other = 'OTHER',
+  SizeIssue = 'SIZE_ISSUE',
+  WrongItem = 'WRONG_ITEM'
+}
+
+export type ReturnRequestItemInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  imageUrls: Array<Scalars['String']['input']>;
+  orderItemId: Scalars['ID']['input'];
+  reason: ReturnReason;
+};
+
+export enum ReturnStatus {
+  Approved = 'APPROVED',
+  Refunded = 'REFUNDED',
+  Rejected = 'REJECTED',
+  Requested = 'REQUESTED',
+  Returned = 'RETURNED'
+}
 
 export type ShippingAddressInput = {
   addressLine1: Scalars['String']['input'];
@@ -617,6 +701,13 @@ export type DeleteProductMutationVariables = Exact<{
 
 export type DeleteProductMutation = { __typename?: 'Mutation', deleteProduct: { __typename?: 'Product', id: string, name: string } };
 
+export type CreateProductFeedbackMutationVariables = Exact<{
+  input: CreateProductFeedbackInput;
+}>;
+
+
+export type CreateProductFeedbackMutation = { __typename?: 'Mutation', createProductFeedback: { __typename?: 'ProductFeedback', id: string, rating: number, comment?: string | null, createdAt: string, user: { __typename?: 'User', id: string, fullName: string } } };
+
 export type LoginMutationVariables = Exact<{
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -712,6 +803,13 @@ export type GetMyOrderByIdQueryVariables = Exact<{
 
 export type GetMyOrderByIdQuery = { __typename?: 'Query', getMyOrderById?: { __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, shippingAddress: { __typename?: 'Address', fullName: string, phoneNumber: string, addressLine1: string, city: string, postalCode: string }, payment?: { __typename?: 'Payment', paymentMethod: PaymentMethod, paymentStatus: PaymentStatus } | null, items: Array<{ __typename?: 'OrderItem', id: string, quantity: number, priceAtPurchase: number, product: { __typename?: 'Product', id: string, name: string }, productVariant: { __typename?: 'ProductVariant', id: string, size: { __typename?: 'Size', value: string }, color: { __typename?: 'Color', name: string }, images?: Array<{ __typename?: 'ProductImage', imageUrl: string }> | null } }> } | null };
 
+export type FindMyOrderForReturnQueryVariables = Exact<{
+  orderId: Scalars['String']['input'];
+}>;
+
+
+export type FindMyOrderForReturnQuery = { __typename?: 'Query', findMyOrderForReturn?: { __typename?: 'Order', id: string, createdAt: string, items: Array<{ __typename?: 'OrderItem', id: string, quantity: number, priceAtPurchase: number, product: { __typename?: 'Product', id: string, name: string }, productVariant: { __typename?: 'ProductVariant', id: string, size: { __typename?: 'Size', value: string }, color: { __typename?: 'Color', name: string }, images?: Array<{ __typename?: 'ProductImage', imageUrl: string }> | null } }> } | null };
+
 export type UploadPaymentScreenshotMutationVariables = Exact<{
   file: Scalars['Upload']['input'];
 }>;
@@ -734,6 +832,20 @@ export type UpdateOrderStatusMutationVariables = Exact<{
 
 export type UpdateOrderStatusMutation = { __typename?: 'Mutation', updateOrderStatus: { __typename?: 'Order', id: string, orderStatus: OrderStatus } };
 
+export type UploadReturnImageMutationVariables = Exact<{
+  file: Scalars['Upload']['input'];
+}>;
+
+
+export type UploadReturnImageMutation = { __typename?: 'Mutation', uploadReturnImage: { __typename?: 'UploadedFileResponse', url: string } };
+
+export type CreateReturnRequestMutationVariables = Exact<{
+  input: CreateReturnRequestInput;
+}>;
+
+
+export type CreateReturnRequestMutation = { __typename?: 'Mutation', createReturnRequest: boolean };
+
 export type GetProductsListQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']['input']>;
   take?: InputMaybe<Scalars['Int']['input']>;
@@ -752,7 +864,7 @@ export type GetProductByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetProductByIdQuery = { __typename?: 'Query', getProductById?: { __typename?: 'Product', id: string, name: string, description?: string | null, categories?: Array<{ __typename?: 'Category', id: string, name: string }> | null, variants?: Array<{ __typename?: 'ProductVariant', id: string, sku?: string | null, price: number, stock: number, size: { __typename?: 'Size', id: string, value: string }, color: { __typename?: 'Color', id: string, name: string, hexCode?: string | null }, images?: Array<{ __typename?: 'ProductImage', id: string, imageUrl: string, altText?: string | null, isPrimary: boolean }> | null } | null> | null } | null };
+export type GetProductByIdQuery = { __typename?: 'Query', getProductById?: { __typename?: 'Product', id: string, name: string, description?: string | null, averageRating?: number | null, totalReviews?: number | null, categories?: Array<{ __typename?: 'Category', id: string, name: string }> | null, variants?: Array<{ __typename?: 'ProductVariant', id: string, sku?: string | null, price: number, stock: number, size: { __typename?: 'Size', id: string, value: string }, color: { __typename?: 'Color', id: string, name: string, hexCode?: string | null }, images?: Array<{ __typename?: 'ProductImage', id: string, imageUrl: string, altText?: string | null, isPrimary: boolean }> | null } | null> | null, feedback?: Array<{ __typename?: 'ProductFeedback', id: string, rating: number, comment?: string | null, createdAt: string, user: { __typename?: 'User', id: string, fullName: string } }> | null, ratingCounts?: Array<{ __typename?: 'RatingCount', star: number, count: number }> | null } | null };
 
 export type GetColorsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1213,6 +1325,46 @@ export function useDeleteProductMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteProductMutationHookResult = ReturnType<typeof useDeleteProductMutation>;
 export type DeleteProductMutationResult = Apollo.MutationResult<DeleteProductMutation>;
 export type DeleteProductMutationOptions = Apollo.BaseMutationOptions<DeleteProductMutation, DeleteProductMutationVariables>;
+export const CreateProductFeedbackDocument = gql`
+    mutation CreateProductFeedback($input: CreateProductFeedbackInput!) {
+  createProductFeedback(input: $input) {
+    id
+    rating
+    comment
+    createdAt
+    user {
+      id
+      fullName
+    }
+  }
+}
+    `;
+export type CreateProductFeedbackMutationFn = Apollo.MutationFunction<CreateProductFeedbackMutation, CreateProductFeedbackMutationVariables>;
+
+/**
+ * __useCreateProductFeedbackMutation__
+ *
+ * To run a mutation, you first call `useCreateProductFeedbackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateProductFeedbackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createProductFeedbackMutation, { data, loading, error }] = useCreateProductFeedbackMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateProductFeedbackMutation(baseOptions?: Apollo.MutationHookOptions<CreateProductFeedbackMutation, CreateProductFeedbackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateProductFeedbackMutation, CreateProductFeedbackMutationVariables>(CreateProductFeedbackDocument, options);
+      }
+export type CreateProductFeedbackMutationHookResult = ReturnType<typeof useCreateProductFeedbackMutation>;
+export type CreateProductFeedbackMutationResult = Apollo.MutationResult<CreateProductFeedbackMutation>;
+export type CreateProductFeedbackMutationOptions = Apollo.BaseMutationOptions<CreateProductFeedbackMutation, CreateProductFeedbackMutationVariables>;
 export const LoginDocument = gql`
     mutation Login($email: String!, $password: String!) {
   login(email: $email, password: $password) {
@@ -1862,6 +2014,68 @@ export type GetMyOrderByIdQueryHookResult = ReturnType<typeof useGetMyOrderByIdQ
 export type GetMyOrderByIdLazyQueryHookResult = ReturnType<typeof useGetMyOrderByIdLazyQuery>;
 export type GetMyOrderByIdSuspenseQueryHookResult = ReturnType<typeof useGetMyOrderByIdSuspenseQuery>;
 export type GetMyOrderByIdQueryResult = Apollo.QueryResult<GetMyOrderByIdQuery, GetMyOrderByIdQueryVariables>;
+export const FindMyOrderForReturnDocument = gql`
+    query FindMyOrderForReturn($orderId: String!) {
+  findMyOrderForReturn(orderId: $orderId) {
+    id
+    createdAt
+    items {
+      id
+      quantity
+      priceAtPurchase
+      product {
+        id
+        name
+      }
+      productVariant {
+        id
+        size {
+          value
+        }
+        color {
+          name
+        }
+        images {
+          imageUrl
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useFindMyOrderForReturnQuery__
+ *
+ * To run a query within a React component, call `useFindMyOrderForReturnQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFindMyOrderForReturnQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFindMyOrderForReturnQuery({
+ *   variables: {
+ *      orderId: // value for 'orderId'
+ *   },
+ * });
+ */
+export function useFindMyOrderForReturnQuery(baseOptions: Apollo.QueryHookOptions<FindMyOrderForReturnQuery, FindMyOrderForReturnQueryVariables> & ({ variables: FindMyOrderForReturnQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FindMyOrderForReturnQuery, FindMyOrderForReturnQueryVariables>(FindMyOrderForReturnDocument, options);
+      }
+export function useFindMyOrderForReturnLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FindMyOrderForReturnQuery, FindMyOrderForReturnQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FindMyOrderForReturnQuery, FindMyOrderForReturnQueryVariables>(FindMyOrderForReturnDocument, options);
+        }
+export function useFindMyOrderForReturnSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FindMyOrderForReturnQuery, FindMyOrderForReturnQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FindMyOrderForReturnQuery, FindMyOrderForReturnQueryVariables>(FindMyOrderForReturnDocument, options);
+        }
+export type FindMyOrderForReturnQueryHookResult = ReturnType<typeof useFindMyOrderForReturnQuery>;
+export type FindMyOrderForReturnLazyQueryHookResult = ReturnType<typeof useFindMyOrderForReturnLazyQuery>;
+export type FindMyOrderForReturnSuspenseQueryHookResult = ReturnType<typeof useFindMyOrderForReturnSuspenseQuery>;
+export type FindMyOrderForReturnQueryResult = Apollo.QueryResult<FindMyOrderForReturnQuery, FindMyOrderForReturnQueryVariables>;
 export const UploadPaymentScreenshotDocument = gql`
     mutation UploadPaymentScreenshot($file: Upload!) {
   uploadPaymentScreenshot(file: $file) {
@@ -1965,6 +2179,70 @@ export function useUpdateOrderStatusMutation(baseOptions?: Apollo.MutationHookOp
 export type UpdateOrderStatusMutationHookResult = ReturnType<typeof useUpdateOrderStatusMutation>;
 export type UpdateOrderStatusMutationResult = Apollo.MutationResult<UpdateOrderStatusMutation>;
 export type UpdateOrderStatusMutationOptions = Apollo.BaseMutationOptions<UpdateOrderStatusMutation, UpdateOrderStatusMutationVariables>;
+export const UploadReturnImageDocument = gql`
+    mutation UploadReturnImage($file: Upload!) {
+  uploadReturnImage(file: $file) {
+    url
+  }
+}
+    `;
+export type UploadReturnImageMutationFn = Apollo.MutationFunction<UploadReturnImageMutation, UploadReturnImageMutationVariables>;
+
+/**
+ * __useUploadReturnImageMutation__
+ *
+ * To run a mutation, you first call `useUploadReturnImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUploadReturnImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [uploadReturnImageMutation, { data, loading, error }] = useUploadReturnImageMutation({
+ *   variables: {
+ *      file: // value for 'file'
+ *   },
+ * });
+ */
+export function useUploadReturnImageMutation(baseOptions?: Apollo.MutationHookOptions<UploadReturnImageMutation, UploadReturnImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UploadReturnImageMutation, UploadReturnImageMutationVariables>(UploadReturnImageDocument, options);
+      }
+export type UploadReturnImageMutationHookResult = ReturnType<typeof useUploadReturnImageMutation>;
+export type UploadReturnImageMutationResult = Apollo.MutationResult<UploadReturnImageMutation>;
+export type UploadReturnImageMutationOptions = Apollo.BaseMutationOptions<UploadReturnImageMutation, UploadReturnImageMutationVariables>;
+export const CreateReturnRequestDocument = gql`
+    mutation CreateReturnRequest($input: CreateReturnRequestInput!) {
+  createReturnRequest(input: $input)
+}
+    `;
+export type CreateReturnRequestMutationFn = Apollo.MutationFunction<CreateReturnRequestMutation, CreateReturnRequestMutationVariables>;
+
+/**
+ * __useCreateReturnRequestMutation__
+ *
+ * To run a mutation, you first call `useCreateReturnRequestMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateReturnRequestMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createReturnRequestMutation, { data, loading, error }] = useCreateReturnRequestMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateReturnRequestMutation(baseOptions?: Apollo.MutationHookOptions<CreateReturnRequestMutation, CreateReturnRequestMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateReturnRequestMutation, CreateReturnRequestMutationVariables>(CreateReturnRequestDocument, options);
+      }
+export type CreateReturnRequestMutationHookResult = ReturnType<typeof useCreateReturnRequestMutation>;
+export type CreateReturnRequestMutationResult = Apollo.MutationResult<CreateReturnRequestMutation>;
+export type CreateReturnRequestMutationOptions = Apollo.BaseMutationOptions<CreateReturnRequestMutation, CreateReturnRequestMutationVariables>;
 export const GetProductsListDocument = gql`
     query GetProductsList($skip: Int, $take: Int) {
   getProducts(skip: $skip, take: $take) {
@@ -2105,6 +2383,22 @@ export const GetProductByIdDocument = gql`
         altText
         isPrimary
       }
+    }
+    feedback {
+      id
+      rating
+      comment
+      createdAt
+      user {
+        id
+        fullName
+      }
+    }
+    averageRating
+    totalReviews
+    ratingCounts {
+      star
+      count
     }
   }
 }

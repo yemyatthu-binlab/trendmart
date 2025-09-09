@@ -43,3 +43,18 @@ export const DELETE_PRODUCT = gql`
     }
   }
 `;
+
+export const CREATE_PRODUCT_FEEDBACK = gql`
+  mutation CreateProductFeedback($input: CreateProductFeedbackInput!) {
+    createProductFeedback(input: $input) {
+      id
+      rating
+      comment
+      createdAt
+      user {
+        id
+        fullName
+      }
+    }
+  }
+`;

@@ -178,6 +178,11 @@ export function VariantFormSection({
             />
             <FormField
               control={form.control}
+              name={`variants.${variantIndex}.id`}
+              render={({ field }) => <input type="hidden" {...field} />}
+            />
+            <FormField
+              control={form.control}
               name={`variants.${variantIndex}.colorId`}
               render={({ field }) => (
                 <FormItem>

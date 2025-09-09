@@ -133,6 +133,36 @@ export const GetMyOrderById = gql`
   }
 `;
 
+export const FIND_MY_ORDER_FOR_RETURN = gql`
+  query FindMyOrderForReturn($orderId: String!) {
+    findMyOrderForReturn(orderId: $orderId) {
+      id
+      createdAt
+      items {
+        id
+        quantity
+        priceAtPurchase
+        product {
+          id
+          name
+        }
+        productVariant {
+          id
+          size {
+            value
+          }
+          color {
+            name
+          }
+          images {
+            imageUrl
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const UPLOAD_PAYMENT_SCREENSHOT = gql`
   mutation UploadPaymentScreenshot($file: Upload!) {
     uploadPaymentScreenshot(file: $file) {
@@ -157,5 +187,19 @@ export const UPDATE_ORDER_STATUS = gql`
       id
       orderStatus
     }
+  }
+`;
+
+export const UPLOAD_RETURN_IMAGE = gql`
+  mutation UploadReturnImage($file: Upload!) {
+    uploadReturnImage(file: $file) {
+      url
+    }
+  }
+`;
+
+export const CREATE_RETURN_REQUEST = gql`
+  mutation CreateReturnRequest($input: CreateReturnRequestInput!) {
+    createReturnRequest(input: $input)
   }
 `;

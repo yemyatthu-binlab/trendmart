@@ -14,7 +14,7 @@ export const useAppInitializer = () => {
   });
 
   useEffect(() => {
-    if (loading) {
+    if (!data?.me && loading) {
       return;
     }
 

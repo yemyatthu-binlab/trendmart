@@ -14,54 +14,15 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  useGetProductByIdQuery,
+  useCreateProductFeedbackMutation,
+} from "@/graphql/generated";
+
 import { Star } from "lucide-react";
 import clsx from "clsx";
+import { formatDistanceToNow } from "date-fns";
 
-// Mock data - replace with your actual data fetching logic
-const MOCK_REVIEWS = {
-  averageRating: 4.3,
-  totalReviews: 83,
-  ratingCounts: [
-    { star: 5, count: 52 },
-    { star: 4, count: 18 },
-    { star: 3, count: 5 },
-    { star: 2, count: 3 },
-    { star: 1, count: 5 },
-  ],
-  reviews: [
-    {
-      id: "1",
-      author: "Jane Doe",
-      avatarUrl: "https://github.com/shadcn.png",
-      rating: 5,
-      date: "2 weeks ago",
-      comment:
-        "Absolutely love this! The quality is amazing and it fits perfectly. I've already gotten so many compliments on it. Highly recommend to anyone on the fence.",
-    },
-    {
-      id: "2",
-      author: "John Smith",
-      avatarUrl: "", // Example with no avatar
-      rating: 4,
-      date: "1 month ago",
-      comment:
-        "Great product overall. It's comfortable and looks good. My only small issue is that the color is slightly different from the photos, but it's still very nice.",
-    },
-    {
-      id: "3",
-      author: "Emily White",
-      avatarUrl: "https://github.com/vercel.png",
-      rating: 5,
-      date: "1 month ago",
-      comment:
-        "Exceeded my expectations. Will be buying another one in a different color!",
-    },
-  ],
-};
-
-// ============================================================================
-//  Review Stars Component (for displaying ratings)
-// ============================================================================
 const ReviewStars = ({ rating }: { rating: number }) => (
   <div className="flex items-center">
     {[1, 2, 3, 4, 5].map((star) => (
@@ -78,16 +39,20 @@ const ReviewStars = ({ rating }: { rating: number }) => (
   </div>
 );
 
-// ============================================================================
-//  Ratings Summary Component
-// ============================================================================
-const RatingsSummary = () => {
-  const { averageRating, totalReviews, ratingCounts } = MOCK_REVIEWS;
+const RatingsSummary = ({
+  averageRating,
+  totalReviews,
+  ratingCounts,
+}: {
+  averageRating: number;
+  totalReviews: number;
+  ratingCounts: { star: number; count: number }[];
+}) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
       <div className="flex flex-col items-center justify-center p-6 bg-muted/50 rounded-lg">
         <p className="text-5xl font-bold">{averageRating.toFixed(1)}</p>
-        <ReviewStars rating={averageRating} />
+        <ReviewStars rating={Math.round(averageRating)} />
         <p className="mt-2 text-sm text-muted-foreground">
           Based on {totalReviews} reviews
         </p>
@@ -99,7 +64,7 @@ const RatingsSummary = () => {
               {star} star
             </span>
             <Progress
-              value={(count / totalReviews) * 100}
+              value={totalReviews > 0 ? (count / totalReviews) * 100 : 0}
               className="flex-1 h-3"
             />
             <span className="text-sm text-muted-foreground w-8 text-right">
@@ -112,13 +77,37 @@ const RatingsSummary = () => {
   );
 };
 
-// ============================================================================
-//  Review Form Component
-// ============================================================================
-const ReviewForm = () => {
+const ReviewForm = ({ productId }: { productId: number }) => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [createFeedback, { loading, error }] = useCreateProductFeedbackMutation(
+    {
+      refetchQueries: ["GetProductById"], // Automatically refetch the product data after a successful mutation
+    }
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rating === 0 || comment.length < 1) return;
+
+    try {
+      await createFeedback({
+        variables: {
+          input: {
+            productId: productId,
+            rating,
+            comment,
+          },
+        },
+      });
+      // Clear the form on success
+      setRating(0);
+      setComment("");
+    } catch (err) {
+      console.error("Error submitting review:", err);
+    }
+  };
 
   return (
     <Card>
@@ -158,18 +147,34 @@ const ReviewForm = () => {
         />
       </CardContent>
       <CardFooter>
-        <Button disabled={rating === 0 || comment.length < 10}>
-          Submit Review
+        <Button
+          onClick={handleSubmit}
+          disabled={loading || rating === 0 || comment.length < 1}
+        >
+          {loading ? "Submitting..." : "Submit Review"}
         </Button>
       </CardFooter>
+      {error && (
+        <p className="text-sm text-red-500 px-6 pb-4">*{error.message}</p>
+      )}
     </Card>
   );
 };
 
-// ============================================================================
-//  Main Product Reviews Component
-// ============================================================================
-export const ProductReviews = () => {
+export const ProductReviews = ({ productId }: { productId: string }) => {
+  const { data, loading, error } = useGetProductByIdQuery({
+    variables: { id: productId },
+  });
+
+  if (loading) return <div>Loading reviews...</div>;
+  if (error) return <div>Error loading reviews: {error.message}</div>;
+
+  const product = data?.getProductById;
+
+  if (!product) return <div>No product found.</div>;
+
+  const { averageRating, totalReviews, ratingCounts, feedback } = product;
+
   return (
     <div className="space-y-12">
       {/* --- Section 1: Ratings Summary --- */}
@@ -177,21 +182,32 @@ export const ProductReviews = () => {
         <h3 className="text-2xl font-bold tracking-tight mb-4">
           Customer Reviews
         </h3>
-        <RatingsSummary />
+        <RatingsSummary
+          averageRating={averageRating || 0}
+          totalReviews={totalReviews || 0}
+          ratingCounts={ratingCounts || []}
+        />
       </div>
 
       {/* --- Section 2: Individual Reviews --- */}
       <div className="space-y-8">
-        {MOCK_REVIEWS.reviews.map((review) => (
+        {feedback?.map((review) => (
           <div key={review.id} className="flex gap-4">
             <Avatar>
-              <AvatarImage src={review.avatarUrl} alt={review.author} />
-              <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+              <AvatarImage
+                src={`https://ui-avatars.com/api/?name=${review.user.fullName}&background=random&color=ffffff`}
+                alt={review.user.fullName}
+              />
+              <AvatarFallback>{review.user.fullName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <p className="font-semibold">{review.author}</p>
-                <p className="text-xs text-muted-foreground">{review.date}</p>
+                <p className="font-semibold">{review.user.fullName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {/* {formatDistanceToNow(new Date(review.createdAt), {
+                    addSuffix: true,
+                  })} */}
+                </p>
               </div>
               <div className="my-1">
                 <ReviewStars rating={review.rating} />
@@ -203,7 +219,7 @@ export const ProductReviews = () => {
       </div>
 
       {/* --- Section 3: Add Review Form --- */}
-      <ReviewForm />
+      <ReviewForm productId={parseInt(productId)} />
     </div>
   );
 };

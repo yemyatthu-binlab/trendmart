@@ -77,6 +77,22 @@ export const GET_PRODUCT_BY_ID = gql`
           isPrimary
         }
       }
+      feedback {
+        id
+        rating
+        comment
+        createdAt
+        user {
+          id
+          fullName
+        }
+      }
+      averageRating
+      totalReviews
+      ratingCounts {
+        star
+        count
+      }
     }
   }
 `;
