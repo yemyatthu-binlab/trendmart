@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Loader2, ServerCrash } from "lucide-react";
 import { useGetMyOrdersListQuery } from "@/graphql/generated";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Helper to format date and currency
 const formatDate = (isoString: string) =>
@@ -47,6 +47,8 @@ const getStatusVariant = (status: string) => {
 
 export default function MyOrdersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from") || "/";
   const { data, loading, error } = useGetMyOrdersListQuery({
     variables: { skip: 0, take: 20 },
     fetchPolicy: "cache-and-network",
@@ -76,7 +78,7 @@ export default function MyOrdersPage() {
     <div className="container mx-auto max-w-4xl py-8 px-4">
       <Button
         variant="ghost"
-        onClick={() => router.push("/")}
+        onClick={() => router.push(from)}
         className="mb-6 -ml-4 text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="w-5 h-5 mr-2" />
@@ -95,7 +97,7 @@ export default function MyOrdersPage() {
               <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-medium">No Orders Found</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                You haven't placed any orders yet.
+                You haven&apos;t placed any orders yet.
               </p>
               <Button asChild className="mt-4">
                 <Link href="/">Start Shopping</Link>

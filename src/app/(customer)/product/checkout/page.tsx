@@ -76,11 +76,27 @@ const shippingOptions = [
   { id: "bee", label: "Bee Express", price: 3200 },
 ];
 const paymentOptions = [
-  { id: "kpay", label: "KPay" },
-  { id: "ayapay", label: "AYA Pay" },
-  { id: "wavemoney", label: "Wave Money" },
-  { id: "ayabank", label: "AYA Bank" },
-  { id: "kbzbank", label: "KBZ Bank" },
+  { id: "kpay", label: "KPay", accountNumber: "09-958453693 (Ag Myint Myat)" },
+  {
+    id: "ayapay",
+    label: "AYA Pay",
+    accountNumber: "09-958453693 (Ag Myint Myat)",
+  },
+  {
+    id: "wavemoney",
+    label: "Wave Money",
+    accountNumber: "09-958453693 (Ag Myint Myat)",
+  },
+  {
+    id: "ayabank",
+    label: "AYA Bank",
+    accountNumber: "AYA-112233445566 (U Aung Myint Myat)",
+  },
+  {
+    id: "kbzbank",
+    label: "KBZ Bank",
+    accountNumber: "KBZ-998877665544 (U Aung Myint Myat)",
+  },
 ];
 
 // The main component, now a page
@@ -447,12 +463,17 @@ export default function CheckoutPage() {
                                   </FormControl>
                                   <FormLabel
                                     className={cn(
-                                      "flex items-center justify-center rounded-md border-2 p-4 font-normal hover:bg-muted/50 transition-colors cursor-pointer",
+                                      "flex flex-col items-center justify-center rounded-md border-2 p-4 font-normal hover:bg-muted/50 transition-colors cursor-pointer text-center",
                                       field.value === option.id &&
                                         "border-primary ring-1 ring-primary"
                                     )}
                                   >
-                                    {option.label}
+                                    <span className="text-base font-medium">
+                                      {option.label}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground mt-1">
+                                      {option.accountNumber}
+                                    </span>
                                   </FormLabel>
                                 </FormItem>
                               ))}

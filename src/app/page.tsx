@@ -1,12 +1,15 @@
+// src/page.tsx
 "use client";
 
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import { useDebouncedCallback } from "use-debounce";
+// 🗑️ REMOVED: useDebouncedCallback is no longer needed in this component
+// import { useDebouncedCallback } from "use-debounce";
 import {
   useListPublicProductsQuery,
   GetMainSubCategoriesQuery,
   useGetCategoriesQuery,
+  SortOrder,
 } from "@/graphql/generated";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,11 +34,14 @@ import {
   Menu,
   ShoppingBag,
   X,
+  Twitter,
+  Instagram,
+  Facebook,
 } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ProductCard } from "@/components/organisms/products/ProductCard/ProductCard";
 import { useAuthStore } from "@/store/auth";
-import { AuthDialog } from "@/components/organisms/auth/AuthDialog/AuthDialog"; // Import the new dialog
+import { AuthDialog } from "@/components/organisms/auth/AuthDialog/AuthDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,18 +51,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+// ✨ NEW: Import the Zustand store
+import { useProductFilterStore, Filters } from "@/store/productFilterStore";
+import { usePathname, useRouter } from "next/navigation";
 
 type Category = GetMainSubCategoriesQuery["getMainSubCategories"][number];
-type SortOrder = "asc" | "desc";
 type SortField = "createdAt" | "price";
-type Filters = {
-  search: string;
-  categoryIds: number[];
-  sort: {
-    field: SortField;
-    order: SortOrder;
-  };
-};
+
+// 🗑️ REMOVED: Filters type is now imported from the store
 
 export const CATEGORY_GRADIENTS = [
   "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)", // pink → soft peach
@@ -73,18 +75,32 @@ export const CATEGORY_GRADIENTS = [
 
 const AppHeader = ({
   onCategorySelect,
+  onSearchChange,
+  onSortChange,
+  onClearFilters,
+  selectedCategoryName,
+  filters,
 }: {
-  onCategorySelect: (categoryId: number) => void;
+  onCategorySelect: (categoryId: number, categoryName: string) => void;
+  onSearchChange: (searchTerm: string) => void;
+  onSortChange: (field: SortField, order: SortOrder) => void;
+  onClearFilters: () => void;
+  selectedCategoryName: string | null;
+  filters: Filters;
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // ✨ NEW: State to track which category was clicked to open the Mega Menu
+  const [activeCategoryForMenu, setActiveCategoryForMenu] = useState<
+    string | null
+  >(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { data: categoriesData, loading: categoriesLoading } =
     useGetCategoriesQuery();
   const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuthStore();
-
-  const handleCategoryClick = (categoryId: number) => {
-    onCategorySelect(categoryId);
+  const pathname = usePathname();
+  const handleCategoryClick = (categoryId: number, categoryName: string) => {
+    onCategorySelect(categoryId, categoryName);
     setIsMenuOpen(false);
   };
 
@@ -103,15 +119,31 @@ const AppHeader = ({
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            {categoriesData?.getCategories?.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setIsMenuOpen(true)}
-                className="transition-colors hover:text-foreground/80 text-foreground/60"
-              >
-                {cat.name}
-              </button>
-            ))}
+            {selectedCategoryName ? (
+              <div className="flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                <span className="font-semibold">{selectedCategoryName}</span>
+                <button
+                  onClick={onClearFilters}
+                  className="rounded-full hover:bg-primary-foreground/20 p-0.5"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              categoriesData?.getCategories?.map((cat) => (
+                <button
+                  key={cat.id}
+                  // 🔄 CHANGED: Set the active category for the menu before opening it
+                  onClick={() => {
+                    setActiveCategoryForMenu(cat.name);
+                    setIsMenuOpen(true);
+                  }}
+                  className="transition-colors hover:text-foreground/80 text-foreground/60"
+                >
+                  {cat.name}
+                </button>
+              ))
+            )}
           </nav>
 
           <div className="flex flex-1 items-center justify-end space-x-4">
@@ -129,9 +161,8 @@ const AppHeader = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
-                    {/* <User className="h-5 w-5" /> */}
-                    <div className="h-5 w-5 rounded-full bg-black">
-                      <p className="text-white">
+                    <div className="h-5 w-5 rounded-full bg-black flex items-center justify-center">
+                      <p className="text-white text-xs font-bold">
                         {user?.fullName.charAt(0).toUpperCase()}
                       </p>
                     </div>
@@ -142,10 +173,19 @@ const AppHeader = ({
                     Hi, {user?.fullName.split(" ")[0]}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Link href="/account/orders">My Orders</Link>
+                    <Link href="/account/profile">Profile</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link
+                      href={`/account/orders?from=${encodeURIComponent(
+                        pathname
+                      )}`}
+                    >
+                      My Orders
+                    </Link>
+                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -166,7 +206,11 @@ const AppHeader = ({
               variant="ghost"
               size="icon"
               className="md:hidden"
-              onClick={() => setIsMenuOpen(true)}
+              // 🔄 CHANGED: Reset active category when using the generic menu button
+              onClick={() => {
+                setActiveCategoryForMenu(null);
+                setIsMenuOpen(true);
+              }}
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -180,13 +224,17 @@ const AppHeader = ({
         categories={categoriesData?.getCategories ?? []}
         loading={categoriesLoading}
         onCategorySelect={handleCategoryClick}
+        // ✨ NEW: Pass the active category name to the Mega Menu
+        activeCategoryName={activeCategoryForMenu}
       />
       <SearchDialog
         isOpen={isSearchOpen}
         onOpenChange={setIsSearchOpen}
-        // These would be wired up to the main page state
-        onSearchChange={() => {}}
-        onSortChange={() => {}}
+        onSearchChange={onSearchChange}
+        onSortChange={onSortChange}
+        currentSearch={filters.search}
+        // ✨ NEW: Pass the current sort state to the dialog
+        currentSort={filters.sort}
       />
     </>
   );
@@ -198,12 +246,14 @@ const MegaMenu = ({
   categories,
   loading,
   onCategorySelect,
+  activeCategoryName, // ✨ NEW Prop
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   categories: Category[];
   loading: boolean;
-  onCategorySelect: (categoryId: number) => void;
+  onCategorySelect: (categoryId: number, categoryName: string) => void;
+  activeCategoryName?: string | null; // ✨ NEW Prop
 }) => {
   if (!isOpen) return null;
 
@@ -224,7 +274,12 @@ const MegaMenu = ({
           </div>
         ) : (
           <Tabs
-            defaultValue={categories[0]?.name.toLowerCase() ?? ""}
+            // 🔄 CHANGED: Set the default value based on the passed prop, with a fallback
+            defaultValue={
+              activeCategoryName?.toLowerCase() ??
+              categories[0]?.name.toLowerCase() ??
+              ""
+            }
             className="flex-grow flex flex-col"
           >
             <TabsList className="mx-6">
@@ -244,7 +299,9 @@ const MegaMenu = ({
                   {cat.children?.map((subCat) => (
                     <div
                       key={subCat.id}
-                      onClick={() => onCategorySelect(parseInt(subCat.id, 10))}
+                      onClick={() =>
+                        onCategorySelect(parseInt(subCat.id, 10), subCat.name)
+                      }
                       className="group cursor-pointer space-y-2"
                     >
                       <div
@@ -285,20 +342,25 @@ const SearchDialog = ({
   onOpenChange,
   onSearchChange,
   onSortChange,
+  currentSearch,
+  currentSort, // ✨ NEW Prop
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onSearchChange: (searchTerm: string) => void;
   onSortChange: (field: SortField, order: SortOrder) => void;
+  currentSearch: string;
+  currentSort: { field: SortField; order: SortOrder }; // ✨ NEW Prop
 }) => {
-  const handleSearch = useDebouncedCallback((e) => {
-    onSearchChange(e.target.value);
-  }, 300);
+  const [searchInput, setSearchInput] = useState(currentSearch);
 
   const handleSort = (value: string) => {
     const [field, order] = value.split("-") as [SortField, SortOrder];
     onSortChange(field, order);
   };
+
+  // 🔄 CHANGED: Calculate the correct default value for the radio group
+  const defaultSortValue = `${currentSort.field}-${currentSort.order}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -311,7 +373,10 @@ const SearchDialog = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Search products..."
-              onChange={handleSearch}
+              value={searchInput || ""}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+              }}
               className="pl-10 text-base"
             />
           </div>
@@ -319,7 +384,8 @@ const SearchDialog = ({
             <Label className="text-base font-semibold">Sort by</Label>
             <RadioGroup
               onValueChange={handleSort}
-              defaultValue="createdAt-desc"
+              // 🔄 CHANGED: Use the calculated default value
+              defaultValue={defaultSortValue}
               className="mt-2 space-y-1"
             >
               <div className="flex items-center space-x-2">
@@ -336,11 +402,23 @@ const SearchDialog = ({
               </div>
             </RadioGroup>
           </div>
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                onSearchChange(searchInput);
+                onOpenChange(false);
+              }}
+            >
+              Apply
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
+
+// ... (HeroSlider component remains unchanged) ...
 
 const SLIDES = [
   {
@@ -423,33 +501,56 @@ const HeroSlider = () => {
   );
 };
 
-// ============================================================================
-// UPDATED COMPONENT: ProductGrid
-// ============================================================================
+// ... (ProductGrid component remains unchanged) ...
 const ProductGrid = ({ filters }: { filters: Filters }) => {
-  const { data, loading, error } = useListPublicProductsQuery({
+  const { data, loading, error, fetchMore } = useListPublicProductsQuery({
     variables: {
       skip: 0,
-      take: 20,
+      take: 20, // Initial number of products to load
       filter: {
         search: filters.search,
         categoryIds: filters.categoryIds,
       },
-      // sort: filters.sort,
+      sort: filters.sort,
     },
     fetchPolicy: "cache-and-network",
   });
+
+  const handleLoadMore = () => {
+    if (!data) return;
+
+    fetchMore({
+      variables: {
+        // We calculate the new 'skip' value based on how many products are already loaded
+        skip: data?.listPublicProducts?.products.length,
+      },
+      updateQuery: (prevResult, { fetchMoreResult }) => {
+        if (!fetchMoreResult) return prevResult;
+        return {
+          listPublicProducts: {
+            ...prevResult.listPublicProducts,
+            products: [
+              ...(prevResult?.listPublicProducts?.products || []),
+              ...(fetchMoreResult?.listPublicProducts?.products || []),
+            ],
+          },
+        };
+      },
+    });
+  };
 
   if (error) {
     return <p>Error loading products: {error.message}</p>;
   }
 
-  // Always render the grid container to maintain layout stability
+  const products = data?.listPublicProducts?.products ?? [];
+  const totalCount = data?.listPublicProducts?.totalCount ?? 0;
+  const hasMore = products.length < totalCount;
+
   return (
     <main className="w-full">
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 w-full">
-        {loading && !data ? (
-          // Skeletons are rendered inside the grid
+        {loading && products.length === 0 ? (
           Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-2">
               <Skeleton className="aspect-[3/4] w-full" />
@@ -457,63 +558,234 @@ const ProductGrid = ({ filters }: { filters: Filters }) => {
               <Skeleton className="h-5 w-1/2" />
             </div>
           ))
-        ) : data?.listPublicProducts?.products?.length === 0 ? (
-          // "No products" message now spans the full grid width
+        ) : products.length === 0 ? (
           <div className="col-span-full text-center py-20">
             <h2 className="text-2xl font-semibold">No Products Found</h2>
             <p className="text-muted-foreground mt-2">
-              Try adjusting your filters to find what you&#39;re looking for.
+              Try adjusting your filters to find what you&apos;re looking for.
             </p>
           </div>
         ) : (
-          // Products are rendered inside the grid
-          data?.listPublicProducts?.products.map((product) => (
+          products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
       </div>
+
+      {/* ✨ NEW: "Load More" Button */}
+      {hasMore && (
+        <div className="flex justify-center mt-12">
+          <Button
+            onClick={handleLoadMore}
+            disabled={loading}
+            size="lg"
+            variant="outline"
+          >
+            {loading ? "Loading..." : "Load More"}
+          </Button>
+        </div>
+      )}
     </main>
   );
 };
 
-// ============================================================================
-// REFACTORED: Main Page Component
-// ============================================================================
+export const Footer = () => {
+  return (
+    <footer className="bg-gray-100 dark:bg-gray-900 border-t">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand and Social */}
+          <div className="space-y-4">
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-bold text-xl"
+            >
+              <ShoppingBag className="h-7 w-7" />
+              <span>TrendMart</span>
+            </Link>
+            <p className="text-muted-foreground">
+              Your one-stop shop for the latest fashion trends.
+            </p>
+            <div className="flex space-x-4">
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-primary"
+                aria-label="Facebook"
+              >
+                <Facebook size={20} />
+              </a>
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-primary"
+                aria-label="Twitter"
+              >
+                <Twitter size={20} />
+              </a>
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-primary"
+                aria-label="Instagram"
+              >
+                <Instagram size={20} />
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  New Arrivals
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Sale
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  About Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="font-semibold text-lg mb-4">Legal</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Return Policy
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <h3 className="font-semibold text-lg mb-4">Contact Us</h3>
+            <address className="not-italic text-muted-foreground space-y-2">
+              <p>Kan Ne Ward, Pathein</p>
+              <p>
+                Email:{" "}
+                <a
+                  href="mailto:support@trendmart.com"
+                  className="hover:text-primary"
+                >
+                  support.trendmart@gmail.com
+                </a>
+              </p>
+              <p>
+                Phone:{" "}
+                <a href="tel:+959123456789" className="hover:text-primary">
+                  +959 958 453 693
+                </a>
+              </p>
+            </address>
+          </div>
+        </div>
+
+        <div className="mt-12 pt-6 text-center text-muted-foreground">
+          <p>
+            &copy; {new Date().getFullYear()} TrendMart. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
 export default function HomePage() {
-  const [filters, setFilters] = useState<Filters>({
-    search: "",
-    categoryIds: [],
-    sort: { field: "createdAt", order: "desc" },
-  });
-
-  const handleCategorySelect = (categoryId: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      // Reset search and set the new category
-      search: "",
-      categoryIds: [categoryId],
-    }));
-  };
-
-  const handleSearchChange = (search: string) => {
-    setFilters((prev) => ({ ...prev, search, categoryIds: [] })); // Clear category filter on new search
-  };
-
-  const handleSortChange = (field: SortField, order: SortOrder) => {
-    setFilters((prev) => ({ ...prev, sort: { field, order } }));
-  };
+  // 🔄 CHANGED: State is now managed by the Zustand store
+  const {
+    filters,
+    selectedCategoryName,
+    setCategory,
+    setSearch,
+    setSort,
+    clearFilters,
+  } = useProductFilterStore();
 
   return (
-    // Establish a full-height flex column layout for the entire page
     <div className="flex min-h-screen flex-col bg-background mx-auto">
-      <AppHeader onCategorySelect={handleCategorySelect} />
-      {/* The <main> tag grows to fill remaining space, preventing shrinking */}
+      <AppHeader
+        // 🔄 CHANGED: Pass the actions from the store to the header
+        onCategorySelect={setCategory}
+        onSearchChange={setSearch}
+        onSortChange={setSort}
+        onClearFilters={clearFilters}
+        selectedCategoryName={selectedCategoryName}
+        filters={filters}
+      />
+
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8 space-y-8">
           <HeroSlider />
+          {(filters.categoryIds.length > 0 || filters.search) && (
+            <div className="flex items-center justify-between bg-secondary/50 p-3 rounded-lg">
+              <div>
+                <span className="font-semibold">Filtered by: </span>
+                <span className="italic">
+                  {filters.categoryIds.length > 0 &&
+                    `Category: "${selectedCategoryName}"`}
+                  {filters.categoryIds.length > 0 && filters.search && " & "}
+                  {filters.search && `Search: "${filters.search}"`}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={clearFilters} // Use the clear action from the store
+                className="flex items-center gap-2"
+              >
+                <X size={16} />
+                Clear Filter
+              </Button>
+            </div>
+          )}
           <ProductGrid filters={filters} />
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
