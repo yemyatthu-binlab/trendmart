@@ -85,12 +85,13 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     amount
   );
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("en-US", {
+const formatDate = (dateString: string) => {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+};
 const getStatusBadgeVariant = (
   status: string
 ): "default" | "secondary" | "destructive" | "outline" => {

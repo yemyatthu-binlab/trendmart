@@ -28,6 +28,7 @@ import "@/styles/prose-style.css";
 import { ProductReviews } from "@/components/organisms/products/ProductReview/ProductReview";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
+import { useCartStore } from "@/store/cart";
 
 type ProductColor = ProductVariant["color"];
 type ProductSize = ProductVariant["size"];
@@ -128,7 +129,8 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   // NEW: Get authentication status from the store
-  const { isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const { addToCart } = useCartStore();
 
   const { data, loading, error } = useGetProductByIdQuery({
     variables: { id },
@@ -173,6 +175,36 @@ export default function ProductDetailPage() {
   useEffect(() => {
     setQuantity(1);
   }, [selectedVariant]);
+
+  const handleAddToCart = () => {
+    console.log("userId::", user?.id);
+    if (!isAuthenticated || !user?.id) {
+      toast.error("Please log in to add items to your cart.");
+      return;
+    }
+    if (!selectedVariant) {
+      toast.error("Please select a product variation first.");
+      return;
+    }
+
+    const primaryImage = selectedVariant.images?.find(
+      (img: any) => img.isPrimary
+    );
+
+    const itemToAdd = {
+      productId: product.id,
+      productName: product.name,
+      variantId: selectedVariant.id,
+      color: selectedVariant.color.name,
+      size: selectedVariant.size.value,
+      price: selectedVariant.price,
+      imageUrl: primaryImage?.imageUrl || "/placeholder.svg",
+      quantity,
+    };
+
+    addToCart(user.id, itemToAdd);
+    // toast.success(`${quantity} x ${product.name} added to cart!`);
+  };
 
   const handleColorSelect = (color: ProductColor) => {
     const newVariant = colorGroups
@@ -432,6 +464,7 @@ export default function ProductDetailPage() {
                     className="rounded-full px-4"
                     aria-label="Add to Cart"
                     disabled={!isAuthenticated}
+                    onClick={handleAddToCart}
                   >
                     <ShoppingBag className="w-5 h-5" />
                   </Button>

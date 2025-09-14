@@ -37,8 +37,13 @@ import {
 import { useRouter } from "next/navigation";
 
 // Re-using helpers from your orders page
-const formatDate = (isoString: string) =>
-  new Date(isoString).toLocaleDateString();
+const formatDate = (dateString: string) => {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 const formatCurrency = (amount: number) => `Ks ${amount.toLocaleString()}`;
 const getStatusVariant = (status: string) => {
   switch (status) {

@@ -49,7 +49,7 @@ const formatCurrency = (amount: number) => {
 
 // Helper to format date
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",

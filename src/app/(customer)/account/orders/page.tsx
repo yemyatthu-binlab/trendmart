@@ -24,8 +24,13 @@ import { useGetMyOrdersListQuery } from "@/graphql/generated";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // Helper to format date and currency
-const formatDate = (isoString: string) =>
-  new Date(isoString).toLocaleDateString();
+const formatDate = (dateString: string) => {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 const formatCurrency = (amount: number) => `Ks ${amount.toLocaleString()}`;
 
 // Helper for status badge styling

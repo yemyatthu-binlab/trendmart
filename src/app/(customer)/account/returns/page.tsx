@@ -26,13 +26,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // --- Helper Functions ---
-const formatDate = (isoString: string) =>
-  new Date(isoString).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
+const formatDate = (dateString: string) => {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
     year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-
+};
 const getStatusVariant = (status: string) => {
   switch (status) {
     case "APPROVED":

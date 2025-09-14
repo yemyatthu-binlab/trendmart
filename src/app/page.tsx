@@ -54,6 +54,7 @@ import Link from "next/link";
 // ✨ NEW: Import the Zustand store
 import { useProductFilterStore, Filters } from "@/store/productFilterStore";
 import { usePathname, useRouter } from "next/navigation";
+import { CartIcon } from "@/components/molecules/orders/CartIcon/CartIcon";
 
 type Category = GetMainSubCategoriesQuery["getMainSubCategories"][number];
 type SortField = "createdAt" | "price";
@@ -199,9 +200,7 @@ const AppHeader = ({
                 <User className="h-5 w-5" />
               </Button>
             )}
-            <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-5 w-5" />
-            </Button>
+            <CartIcon />
             <Button
               variant="ghost"
               size="icon"

@@ -33,8 +33,9 @@ const formatCurrency = (amount: number) => {
     currency: "USD",
   }).format(amount);
 };
+
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",

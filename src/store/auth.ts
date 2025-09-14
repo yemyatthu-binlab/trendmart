@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { apolloClient } from "@/lib/apolloClient";
 import { User } from "@/graphql/generated";
+import { useCartStore } from "./cart";
 
 type AuthState = {
   user: User | null;
@@ -23,7 +24,7 @@ const clearAuthCredentials = () => {
     "customer-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true, // <-- Start as true, since we need to verify auth on load
@@ -33,6 +34,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user, isAuthenticated: true, isLoading: false });
   },
   logout: () => {
+    const userId = get().user?.id;
+    if (userId) {
+      useCartStore.getState().clearCart(userId);
+    }
     clearAuthCredentials();
     apolloClient.resetStore();
     set({ user: null, isAuthenticated: false, isLoading: false });

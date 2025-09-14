@@ -67,13 +67,12 @@ const GET_RETURN_REQUESTS = gql`
 
 // Helper to format date
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 };
-
 // Helper for status badges
 const getStatusBadgeVariant = (
   status: string

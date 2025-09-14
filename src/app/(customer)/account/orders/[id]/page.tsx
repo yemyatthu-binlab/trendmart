@@ -11,8 +11,13 @@ import { ArrowLeft, Loader2, ServerCrash, AlertCircle } from "lucide-react";
 import { useGetMyOrderByIdQuery } from "@/graphql/generated";
 
 // Re-use helpers from the list page
-const formatDate = (isoString: string) =>
-  new Date(isoString).toLocaleDateString();
+const formatDate = (dateString: string) => {
+  return new Date(Number(dateString)).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 const formatCurrency = (amount: number) => `Ks ${amount.toLocaleString()}`;
 const getStatusVariant = (status: string) => {
   // ... same as above
@@ -163,7 +168,11 @@ export default function OrderDetailPage() {
                     order.payment?.paymentStatus || "PENDING"
                   )}
                 >
-                  {order.payment?.paymentStatus.replace("_", " ") || "PENDING"}
+                  {["SHIPPED", "DELIVERED", "PROCESSING"].includes(
+                    order.orderStatus
+                  )
+                    ? "COMPLETED"
+                    : order.payment?.paymentStatus.replace("_", " ")}
                 </Badge>
               </div>
             </CardContent>
