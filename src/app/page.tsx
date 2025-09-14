@@ -173,10 +173,10 @@ const AppHeader = ({
                     Hi, {user?.fullName.split(" ")[0]}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/account/profile">Profile</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link
                       href={`/account/orders?from=${encodeURIComponent(
                         pathname

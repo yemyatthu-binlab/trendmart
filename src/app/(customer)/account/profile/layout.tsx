@@ -3,13 +3,22 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Package, User, LogOut, Home, Undo2, DollarSign } from "lucide-react";
+import {
+  Package,
+  User,
+  LogOut,
+  Home,
+  Undo2,
+  DollarSign,
+  PackageOpen,
+} from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils"; // Your utility for merging class names
 
 const navItems = [
-  { href: "/refund", label: "Refund", icon: DollarSign },
+  { href: "/refund", label: "Request Refund", icon: PackageOpen },
+  { href: "/account/returns", label: "My Refunds", icon: DollarSign },
   { href: "/account/orders", label: "My Orders", icon: Package },
   // Add more links like "/account/settings" here in the future
 ];

@@ -122,7 +122,6 @@ export type Mutation = {
   assignSizesToSubCategory: Category;
   createCategory: Category;
   createColor: Color;
-  /** Creates a new order after validating stock, address, and payment info. */
   createOrder: Order;
   createProduct: Product;
   createProductFeedback: ProductFeedback;
@@ -140,9 +139,9 @@ export type Mutation = {
   updateColor: Color;
   updateOrderStatus: Order;
   updateProduct: Product;
+  updateReturnRequestStatus: ReturnRequest;
   updateSize: Size;
   uploadImage: UploadedImage;
-  /** Uploads a payment screenshot file and returns its public URL. */
   uploadPaymentScreenshot: UploadedFileResponse;
   uploadReturnImage: UploadedFileResponse;
   verifyOtpAndCompleteRegistration: AuthPayload;
@@ -262,6 +261,12 @@ export type MutationUpdateProductArgs = {
 };
 
 
+export type MutationUpdateReturnRequestStatusArgs = {
+  returnRequestId: Scalars['ID']['input'];
+  status: ReturnStatus;
+};
+
+
 export type MutationUpdateSizeArgs = {
   id: Scalars['ID']['input'];
   value: Scalars['String']['input'];
@@ -304,6 +309,7 @@ export type Order = {
 export type OrderItem = {
   __typename?: 'OrderItem';
   id: Scalars['ID']['output'];
+  order: Order;
   priceAtPurchase: Scalars['Float']['output'];
   product: Product;
   productVariant: ProductVariant;
@@ -431,10 +437,13 @@ export type Query = {
   getMainSubCategories: Array<Category>;
   getMyOrderById?: Maybe<Order>;
   getMyOrders: OrderListResponse;
+  getMyReturnRequests: ReturnRequestListResponse;
   getOrderById?: Maybe<Order>;
   getOrders: OrderListResponse;
   getProductById?: Maybe<Product>;
   getProducts?: Maybe<ProductListResponse>;
+  getReturnRequestById?: Maybe<ReturnRequest>;
+  getReturnRequests: ReturnRequestListResponse;
   getSizes?: Maybe<Array<Size>>;
   getUnassignedSizesForCategory: Array<Size>;
   listPublicProducts?: Maybe<PublicProductListResponse>;
@@ -469,6 +478,12 @@ export type QueryGetMyOrdersArgs = {
 };
 
 
+export type QueryGetMyReturnRequestsArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryGetOrderByIdArgs = {
   id: Scalars['ID']['input'];
 };
@@ -488,6 +503,18 @@ export type QueryGetProductByIdArgs = {
 
 export type QueryGetProductsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGetReturnRequestByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetReturnRequestsArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<ReturnStatus>;
   take?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -517,11 +544,35 @@ export enum ReturnReason {
   WrongItem = 'WRONG_ITEM'
 }
 
+export type ReturnRequest = {
+  __typename?: 'ReturnRequest';
+  createdAt: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  images: Array<ReturnRequestImage>;
+  orderItem: OrderItem;
+  reason: ReturnReason;
+  status: ReturnStatus;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ReturnRequestImage = {
+  __typename?: 'ReturnRequestImage';
+  id: Scalars['ID']['output'];
+  imageUrl: Scalars['String']['output'];
+};
+
 export type ReturnRequestItemInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   imageUrls: Array<Scalars['String']['input']>;
   orderItemId: Scalars['ID']['input'];
   reason: ReturnReason;
+};
+
+export type ReturnRequestListResponse = {
+  __typename?: 'ReturnRequestListResponse';
+  returnRequests: Array<ReturnRequest>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum ReturnStatus {
@@ -795,6 +846,14 @@ export type GetMyOrdersListQueryVariables = Exact<{
 
 
 export type GetMyOrdersListQuery = { __typename?: 'Query', getMyOrders: { __typename?: 'OrderListResponse', totalCount: number, orders: Array<{ __typename?: 'Order', id: string, createdAt: string, orderStatus: OrderStatus, orderTotal: number, items: Array<{ __typename?: 'OrderItem', id: string }> }> } };
+
+export type GetMyReturnRequestsQueryVariables = Exact<{
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetMyReturnRequestsQuery = { __typename?: 'Query', getMyReturnRequests: { __typename?: 'ReturnRequestListResponse', totalCount: number, returnRequests: Array<{ __typename?: 'ReturnRequest', id: string, reason: ReturnReason, status: ReturnStatus, description?: string | null, createdAt: string, updatedAt: string, orderItem: { __typename?: 'OrderItem', id: string, quantity: number, product: { __typename?: 'Product', id: string, name: string }, productVariant: { __typename?: 'ProductVariant', id: string, size: { __typename?: 'Size', value: string }, color: { __typename?: 'Color', name: string }, images?: Array<{ __typename?: 'ProductImage', imageUrl: string }> | null } }, images: Array<{ __typename?: 'ReturnRequestImage', id: string, imageUrl: string }> }> } };
 
 export type GetMyOrderByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1939,6 +1998,79 @@ export type GetMyOrdersListQueryHookResult = ReturnType<typeof useGetMyOrdersLis
 export type GetMyOrdersListLazyQueryHookResult = ReturnType<typeof useGetMyOrdersListLazyQuery>;
 export type GetMyOrdersListSuspenseQueryHookResult = ReturnType<typeof useGetMyOrdersListSuspenseQuery>;
 export type GetMyOrdersListQueryResult = Apollo.QueryResult<GetMyOrdersListQuery, GetMyOrdersListQueryVariables>;
+export const GetMyReturnRequestsDocument = gql`
+    query GetMyReturnRequests($skip: Int, $take: Int) {
+  getMyReturnRequests(skip: $skip, take: $take) {
+    returnRequests {
+      id
+      reason
+      status
+      description
+      createdAt
+      updatedAt
+      orderItem {
+        id
+        quantity
+        product {
+          id
+          name
+        }
+        productVariant {
+          id
+          size {
+            value
+          }
+          color {
+            name
+          }
+          images {
+            imageUrl
+          }
+        }
+      }
+      images {
+        id
+        imageUrl
+      }
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetMyReturnRequestsQuery__
+ *
+ * To run a query within a React component, call `useGetMyReturnRequestsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyReturnRequestsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyReturnRequestsQuery({
+ *   variables: {
+ *      skip: // value for 'skip'
+ *      take: // value for 'take'
+ *   },
+ * });
+ */
+export function useGetMyReturnRequestsQuery(baseOptions?: Apollo.QueryHookOptions<GetMyReturnRequestsQuery, GetMyReturnRequestsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyReturnRequestsQuery, GetMyReturnRequestsQueryVariables>(GetMyReturnRequestsDocument, options);
+      }
+export function useGetMyReturnRequestsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyReturnRequestsQuery, GetMyReturnRequestsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyReturnRequestsQuery, GetMyReturnRequestsQueryVariables>(GetMyReturnRequestsDocument, options);
+        }
+export function useGetMyReturnRequestsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyReturnRequestsQuery, GetMyReturnRequestsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyReturnRequestsQuery, GetMyReturnRequestsQueryVariables>(GetMyReturnRequestsDocument, options);
+        }
+export type GetMyReturnRequestsQueryHookResult = ReturnType<typeof useGetMyReturnRequestsQuery>;
+export type GetMyReturnRequestsLazyQueryHookResult = ReturnType<typeof useGetMyReturnRequestsLazyQuery>;
+export type GetMyReturnRequestsSuspenseQueryHookResult = ReturnType<typeof useGetMyReturnRequestsSuspenseQuery>;
+export type GetMyReturnRequestsQueryResult = Apollo.QueryResult<GetMyReturnRequestsQuery, GetMyReturnRequestsQueryVariables>;
 export const GetMyOrderByIdDocument = gql`
     query GetMyOrderById($id: ID!) {
   getMyOrderById(id: $id) {

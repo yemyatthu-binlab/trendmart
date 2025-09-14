@@ -90,6 +90,46 @@ export const GetMyOrdersList = gql`
   }
 `;
 
+export const GetMyReturnRequests = gql`
+  query GetMyReturnRequests($skip: Int, $take: Int) {
+    getMyReturnRequests(skip: $skip, take: $take) {
+      returnRequests {
+        id
+        reason
+        status
+        description
+        createdAt
+        updatedAt
+        orderItem {
+          id
+          quantity
+          product {
+            id
+            name
+          }
+          productVariant {
+            id
+            size {
+              value
+            }
+            color {
+              name
+            }
+            images {
+              imageUrl
+            }
+          }
+        }
+        images {
+          id
+          imageUrl
+        }
+      }
+      totalCount
+    }
+  }
+`;
+
 export const GetMyOrderById = gql`
   query GetMyOrderById($id: ID!) {
     getMyOrderById(id: $id) {

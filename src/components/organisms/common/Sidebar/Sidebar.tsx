@@ -9,6 +9,7 @@ import {
   Users2,
   PanelLeft,
   LayoutGrid,
+  PackageOpen,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -121,6 +122,22 @@ export function Sidebar() {
               </TooltipTrigger>
               <TooltipContent side="right">Cateogry</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/admin/returns"
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
+                    isActive("/admin/returns")
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <PackageOpen className="h-5 w-5" />
+                  <span className="sr-only">Returns</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Returns</TooltipContent>
+            </Tooltip>
           </TooltipProvider>
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
@@ -217,6 +234,17 @@ export function Sidebar() {
               >
                 <LayoutGrid className="h-5 w-5" />
                 Category
+              </Link>
+              <Link
+                href="/admin/returns"
+                className={`flex items-center gap-4 px-2.5 ${
+                  isActive("/admin/returns")
+                    ? "text-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <PackageOpen className="h-5 w-5" />
+                Returns
               </Link>
             </nav>
           </SheetContent>
