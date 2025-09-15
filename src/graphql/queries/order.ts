@@ -243,3 +243,35 @@ export const CREATE_RETURN_REQUEST = gql`
     createReturnRequest(input: $input)
   }
 `;
+
+export const GET_DASHBOARD_DATA = gql`
+  query GetDashboardData {
+    stats: getDashboardStats {
+      totalRevenue
+      totalOrders
+      ordersThisMonth
+      ordersLastMonth
+      totalUsers
+      newUsersThisMonth
+    }
+    overview: getRevenueOverview {
+      month
+      revenue
+    }
+    topSelling: getTopSellingProducts(take: 5) {
+      productName
+      variantInfo
+      totalSold
+    }
+    recentOrders: getOrders(take: 5) {
+      orders {
+        id
+        user {
+          fullName
+        }
+        orderTotal
+        orderStatus
+      }
+    }
+  }
+`;

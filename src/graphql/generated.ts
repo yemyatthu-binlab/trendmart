@@ -108,6 +108,16 @@ export type CustomerListResponse = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type DashboardStats = {
+  __typename?: 'DashboardStats';
+  newUsersThisMonth: Scalars['Int']['output'];
+  ordersLastMonth: Scalars['Int']['output'];
+  ordersThisMonth: Scalars['Int']['output'];
+  totalOrders: Scalars['Int']['output'];
+  totalRevenue: Scalars['Float']['output'];
+  totalUsers: Scalars['Int']['output'];
+};
+
 export enum FeedbackRating {
   Five = 'FIVE',
   Four = 'FOUR',
@@ -115,6 +125,12 @@ export enum FeedbackRating {
   Three = 'THREE',
   Two = 'TWO'
 }
+
+export type MonthlyRevenue = {
+  __typename?: 'MonthlyRevenue';
+  month: Scalars['String']['output'];
+  revenue: Scalars['Float']['output'];
+};
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -434,6 +450,8 @@ export type Query = {
   getColorsForManagement: Array<Color>;
   getCustomerById?: Maybe<User>;
   getCustomers?: Maybe<CustomerListResponse>;
+  getDashboardStats: DashboardStats;
+  getLowStockProducts: ProductListResponse;
   getMainSubCategories: Array<Category>;
   getMyOrderById?: Maybe<Order>;
   getMyOrders: OrderListResponse;
@@ -444,7 +462,9 @@ export type Query = {
   getProducts?: Maybe<ProductListResponse>;
   getReturnRequestById?: Maybe<ReturnRequest>;
   getReturnRequests: ReturnRequestListResponse;
+  getRevenueOverview: Array<MonthlyRevenue>;
   getSizes?: Maybe<Array<Size>>;
+  getTopSellingProducts: Array<TopSellingProduct>;
   getUnassignedSizesForCategory: Array<Size>;
   listPublicProducts?: Maybe<PublicProductListResponse>;
   me?: Maybe<User>;
@@ -464,6 +484,13 @@ export type QueryGetCustomerByIdArgs = {
 export type QueryGetCustomersArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGetLowStockProductsArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+  threshold?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -515,6 +542,11 @@ export type QueryGetReturnRequestByIdArgs = {
 export type QueryGetReturnRequestsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<ReturnStatus>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGetTopSellingProductsArgs = {
   take?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -606,6 +638,14 @@ export type SuccessResponse = {
   __typename?: 'SuccessResponse';
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type TopSellingProduct = {
+  __typename?: 'TopSellingProduct';
+  productImage?: Maybe<Scalars['String']['output']>;
+  productName: Scalars['String']['output'];
+  totalSold: Scalars['Int']['output'];
+  variantInfo: Scalars['String']['output'];
 };
 
 export type UpdateProductImageInput = {
@@ -904,6 +944,11 @@ export type CreateReturnRequestMutationVariables = Exact<{
 
 
 export type CreateReturnRequestMutation = { __typename?: 'Mutation', createReturnRequest: boolean };
+
+export type GetDashboardDataQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetDashboardDataQuery = { __typename?: 'Query', stats: { __typename?: 'DashboardStats', totalRevenue: number, totalOrders: number, ordersThisMonth: number, ordersLastMonth: number, totalUsers: number, newUsersThisMonth: number }, overview: Array<{ __typename?: 'MonthlyRevenue', month: string, revenue: number }>, topSelling: Array<{ __typename?: 'TopSellingProduct', productName: string, variantInfo: string, totalSold: number }>, recentOrders: { __typename?: 'OrderListResponse', orders: Array<{ __typename?: 'Order', id: string, orderTotal: number, orderStatus: OrderStatus, user: { __typename?: 'User', fullName: string } }> } };
 
 export type GetProductsListQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']['input']>;
@@ -2375,6 +2420,69 @@ export function useCreateReturnRequestMutation(baseOptions?: Apollo.MutationHook
 export type CreateReturnRequestMutationHookResult = ReturnType<typeof useCreateReturnRequestMutation>;
 export type CreateReturnRequestMutationResult = Apollo.MutationResult<CreateReturnRequestMutation>;
 export type CreateReturnRequestMutationOptions = Apollo.BaseMutationOptions<CreateReturnRequestMutation, CreateReturnRequestMutationVariables>;
+export const GetDashboardDataDocument = gql`
+    query GetDashboardData {
+  stats: getDashboardStats {
+    totalRevenue
+    totalOrders
+    ordersThisMonth
+    ordersLastMonth
+    totalUsers
+    newUsersThisMonth
+  }
+  overview: getRevenueOverview {
+    month
+    revenue
+  }
+  topSelling: getTopSellingProducts(take: 5) {
+    productName
+    variantInfo
+    totalSold
+  }
+  recentOrders: getOrders(take: 5) {
+    orders {
+      id
+      user {
+        fullName
+      }
+      orderTotal
+      orderStatus
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetDashboardDataQuery__
+ *
+ * To run a query within a React component, call `useGetDashboardDataQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDashboardDataQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDashboardDataQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetDashboardDataQuery(baseOptions?: Apollo.QueryHookOptions<GetDashboardDataQuery, GetDashboardDataQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDashboardDataQuery, GetDashboardDataQueryVariables>(GetDashboardDataDocument, options);
+      }
+export function useGetDashboardDataLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDashboardDataQuery, GetDashboardDataQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDashboardDataQuery, GetDashboardDataQueryVariables>(GetDashboardDataDocument, options);
+        }
+export function useGetDashboardDataSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDashboardDataQuery, GetDashboardDataQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDashboardDataQuery, GetDashboardDataQueryVariables>(GetDashboardDataDocument, options);
+        }
+export type GetDashboardDataQueryHookResult = ReturnType<typeof useGetDashboardDataQuery>;
+export type GetDashboardDataLazyQueryHookResult = ReturnType<typeof useGetDashboardDataLazyQuery>;
+export type GetDashboardDataSuspenseQueryHookResult = ReturnType<typeof useGetDashboardDataSuspenseQuery>;
+export type GetDashboardDataQueryResult = Apollo.QueryResult<GetDashboardDataQuery, GetDashboardDataQueryVariables>;
 export const GetProductsListDocument = gql`
     query GetProductsList($skip: Int, $take: Int) {
   getProducts(skip: $skip, take: $take) {

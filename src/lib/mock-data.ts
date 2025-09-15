@@ -37,11 +37,11 @@ export const recentOrders = [
 ];
 
 export const topSellingProducts = [
-  { name: "Premium T-Shirt", sales: 500, revenue: "$10,000" },
-  { name: "Classic Hoodie", sales: 400, revenue: "$8,000" },
-  { name: "Eco-Friendly Tote Bag", sales: 300, revenue: "$6,000" },
-  { name: "Stainless Steel Water Bottle", sales: 250, revenue: "$5,000" },
-  { name: "Leather Wallet", sales: 200, revenue: "$4,000" },
+   { name: "Pokemon UT Graphic T-Shirt", sales: 5, revenue: "225,000 MMK" },
+  { name: "Relax Short Pants", sales: 3, revenue: "225,000 MMK" },
+  { name: "Woven Jacket", sales: 3, revenue: "450,000 MMK" },
+  { name: "Ultra Stretch Mini Dress", sales: 1, revenue: "75,000 MMK" },
+  { name: "Linen Blen Open COlor Shirt", sales: 1, revenue: "45,000 MMk" },
 ];
 
 export const overviewData = [
